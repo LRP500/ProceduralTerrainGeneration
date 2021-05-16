@@ -1,0 +1,184 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7781716182940143451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Grass 2
+  _height: 0.6
+  _color: {r: 0.10898895, g: 0.3679245, b: 0.10898895, a: 0}
+--- !u!114 &-7704222511843712679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Water Deep
+  _height: 0.3
+  _color: {r: 0, g: 0.2897521, b: 0.8396226, a: 0}
+--- !u!114 &-6230790537891538030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Rock 2
+  _height: 0.9
+  _color: {r: 0.1981132, g: 0.17635278, b: 0.13718404, a: 0}
+--- !u!114 &-3601019529680427084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Grass
+  _height: 0.55
+  _color: {r: 0.14807758, g: 0.4433962, b: 0.14807758, a: 0}
+--- !u!114 &-1993975390378894282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Sand
+  _height: 0.45
+  _color: {r: 1, g: 0.91388446, b: 0.47547168, a: 0}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b7ac708d3c6a544bb1dea695e6ac173, type: 3}
+  m_Name: DefaultMapGenerationSettings
+  m_EditorClassIdentifier: 
+  _offset: {x: 0, y: 0}
+  _heightMultiplier: 121
+  _heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.3
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1.4285715
+      outSlope: 1.4285715
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _levelOfDetails: 0
+  _seed: 1
+  _noiseScale: 20
+  _octaves: 4
+  _persistance: 0.5
+  _lacunarity: 2
+  _regions:
+  - {fileID: -7704222511843712679}
+  - {fileID: 6516912687826986754}
+  - {fileID: -1993975390378894282}
+  - {fileID: -3601019529680427084}
+  - {fileID: -7781716182940143451}
+  - {fileID: 1083147204872931958}
+  - {fileID: -6230790537891538030}
+  - {fileID: 9200489802885616418}
+--- !u!114 &1083147204872931958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Rock
+  _height: 0.7
+  _color: {r: 0.26415092, g: 0.22209689, b: 0.15300816, a: 0}
+--- !u!114 &6516912687826986754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Water Shallow
+  _height: 0.4
+  _color: {r: 0, g: 0.34322023, b: 1, a: 0}
+--- !u!114 &9200489802885616418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fed15d732577447bf0a77bf9949bf0, type: 3}
+  m_Name: TerrainType
+  m_EditorClassIdentifier: 
+  _name: Snow
+  _height: 1
+  _color: {r: 1, g: 1, b: 1, a: 0}
