@@ -56,14 +56,14 @@ namespace ProceduralTerrain
 
         private void DrawMap()
         {
-            MapData mapData = GenerateMapData();
+            MapData mapData = GenerateMapData(Vector2.zero);
             _display = _display ? _display : GetComponent<MapDisplay>();
             _display.DrawMap(mapData, _settings);
         }
 
-        private MapData GenerateMapData()
+        private MapData GenerateMapData(Vector2 center)
         {
-            float[,] heightMap = Noise.GenerateNoiseMap(_settings);
+            float[,] heightMap = Noise.GenerateNoiseMap(_settings, center);
             Color[] colorMap = InitializeRegions(heightMap);
             return new MapData(heightMap, colorMap);
         }
@@ -94,15 +94,15 @@ namespace ProceduralTerrain
 
         #region Threading
 
-        public void RequestMapData(System.Action<MapData> callback)
+        public void RequestMapData(Vector2 center, System.Action<MapData> callback)
         {
-            void ThreadStart() => MapDataThread(callback);
+            void ThreadStart() => MapDataThread(center, callback);
             new Thread(ThreadStart).Start();
         }
 
-        private void MapDataThread(System.Action<MapData> callback)
+        private void MapDataThread(Vector2 center, System.Action<MapData> callback)
         {
-            MapData mapData = GenerateMapData();
+            MapData mapData = GenerateMapData(center);
 
             lock (_mapDataThreadInfoQueue)
             {
@@ -110,15 +110,15 @@ namespace ProceduralTerrain
             }
         }
 
-        public void RequestMeshData(MapData mapData, System.Action<MeshData> callback)
+        public void RequestMeshData(MapData mapData, int lod, System.Action<MeshData> callback)
         {
-            void ThreadStart() => MeshDataThread(mapData, callback);
+            void ThreadStart() => MeshDataThread(mapData, lod, callback);
             new Thread(ThreadStart).Start();
         }
 
-        private void MeshDataThread(MapData mapData, System.Action<MeshData> callback)
+        private void MeshDataThread(MapData mapData, int lod, System.Action<MeshData> callback)
         {
-            MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, _settings);
+            MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, _settings, lod);
 
             lock (_meshDataThreadInfoQueue)
             {

@@ -6,50 +6,89 @@ namespace ProceduralTerrain
     [RequireComponent(typeof(MapGenerator))]
     public class TerrainSteaming : MonoBehaviour
     {
+        /// <summary>
+        /// The amount of distance the viewer needs to move from before updating terrain chunks.
+        /// </summary>
+        private const float ViewerMoveDistanceThreshold = 25f;
+        
+        /// <summary>
+        /// Square root of <see cref="ViewerMoveDistanceThreshold"/> for calculation optimization.
+        /// </summary>
+        private const float SqrViewerMoveDistanceThreshold = ViewerMoveDistanceThreshold * ViewerMoveDistanceThreshold;
+
         #region Nested Types
 
+        /// <summary>
+        /// A single chunk of terrain at runtime.
+        /// </summary>
         private class TerrainChunk
         {
             #region Private Fields
 
             private readonly GameObject _gameObject;
-            private Vector2 _position;
+            private readonly Vector2 _position;
             private Bounds _bounds;
 
-            private MeshRenderer _meshRenderer;
-            private MeshFilter _meshFilter;
+            private readonly MeshRenderer _meshRenderer;
+            private readonly MeshFilter _meshFilter;
+
+            private readonly LODInfo[] _detailLevels;
+            private readonly LODMesh[] _lodMeshes;
+            
+            private MapGenerator.MapData _mapData;
+            private bool _mapDataReceived;
+            private int _previousLODIndex = -1;
 
             #endregion Private Fields
 
             #region Public Methods
 
-            public TerrainChunk(Vector2 coord, int size, Transform parent, Material material)
+            public TerrainChunk(Vector2 coord, int size, List<LODInfo> detailLevels, Transform parent, Material material)
             {
+                _detailLevels = detailLevels.ToArray();
                 _position = coord * size;
                 _bounds = new Bounds(_position, Vector2.one * size);
                 var worldPosition = new Vector3(_position.x, 0, _position.y);
 
+                // Initialize visual state
                 _gameObject = new GameObject("Terrain Chunk");
+                _gameObject.transform.SetParent(parent);
+                _gameObject.transform.position = worldPosition;
+                
                 _meshFilter = _gameObject.AddComponent<MeshFilter>();
                 _meshRenderer = _gameObject.AddComponent<MeshRenderer>();
                 _meshRenderer.material = material;
                 
-                _gameObject.transform.SetParent(parent);
-                _gameObject.transform.position = worldPosition;
-
                 SetVisible(false);
 
-                _mapGenerator.RequestMapData(OnMapDataReceived);
+                // Initialize LOD meshes
+                _lodMeshes = new LODMesh[detailLevels.Count];
+                for (int i = 0, length = detailLevels.Count; i < length; ++i)
+                {
+                    _lodMeshes[i] = new LODMesh(detailLevels[i].level, UpdateTerrainChunks);
+                }
+                
+                // Request map data
+                _mapGenerator.RequestMapData(_position, OnMapDataReceived);
             }
 
             /// <summary>
-            /// Enables or disables mesh based on distance from viewer.
+            /// Updates each terrain chunk based on distance from viewer.
             /// </summary>
-            public void Update()
+            public void UpdateTerrainChunks()
             {
-                float distanceFromNearestEdge = Mathf.Sqrt(_bounds.SqrDistance(ViewerPosition));
-                bool visible = distanceFromNearestEdge <= MaxViewDistance;
-                SetVisible(visible);
+                if (_mapDataReceived)
+                {
+                    float viewerDistanceFromNearestEdge = Mathf.Sqrt(_bounds.SqrDistance(ViewerPosition));
+                    bool visible = viewerDistanceFromNearestEdge <= _maxViewDistance;
+
+                    if (visible)
+                    {
+                        SetMeshFromLODIndex(GetLODIndexFromViewerDistance(viewerDistanceFromNearestEdge));
+                    }
+
+                    SetVisible(visible);
+                }
             }
 
             public void SetVisible(bool visible)
@@ -64,24 +103,114 @@ namespace ProceduralTerrain
 
             #endregion Public Methods
 
+            #region Private Methods
+
+            /// <summary>
+            /// Returns the lod index based on distance from viewer.
+            /// </summary>
+            /// <param name="viewerDistance">The distance from viewer.</param>
+            /// <returns>The LOD index.</returns>
+            private int GetLODIndexFromViewerDistance(float viewerDistance)
+            {
+                int lodIndex = 0;
+
+                for (int i = 0, length = _detailLevels.Length - 1; i < length; ++i)
+                {
+                    if (viewerDistance > _detailLevels[i].distanceThreshold)
+                    {
+                        lodIndex = i + 1;
+                    }
+                    else break;
+                }
+
+                return lodIndex;
+            }
+
+            private void SetMeshFromLODIndex(int lodIndex)
+            {
+                if (lodIndex != _previousLODIndex)
+                {
+                    LODMesh lodMesh = _lodMeshes[lodIndex];
+
+                    if (lodMesh.HasMesh)
+                    {
+                        _previousLODIndex = lodIndex;
+                        _meshFilter.mesh = lodMesh.Mesh;
+                    }
+                    else if (!lodMesh.HasRequestedMesh)
+                    {
+                        lodMesh.RequestMesh(_mapData);
+                    }
+                }
+            }
+
             private void OnMapDataReceived(MapGenerator.MapData mapData)
             {
-                _mapGenerator.RequestMeshData(mapData, OnMeshDataReceived);
+                _mapData = mapData;
+                _mapDataReceived = true;
+
+                Texture2D texture = TextureGenerator.TextureFromColorMap(mapData.colorMap,
+                    MapGenerationSettings.ChunkSize,
+                    MapGenerationSettings.ChunkSize);
+
+                _meshRenderer.material.mainTexture = texture;
+
+                UpdateTerrainChunks();
+            }
+
+            #endregion Private Methods
+        }
+
+        /// <summary>
+        /// A terrain chunk's mesh for a single level of detail.
+        /// </summary>
+        private class LODMesh
+        {
+            public Mesh Mesh { get; private set; }
+            public bool HasRequestedMesh { get; private set; }
+            public bool HasMesh { get; private set; }
+            
+            private readonly int _lod;
+            private System.Action _updateCallback;
+
+            public LODMesh(int lod, System.Action updateCallback)
+            {
+                _lod = lod;
+                _updateCallback = updateCallback;
+            }
+
+            public void RequestMesh(MapGenerator.MapData mapData)
+            {
+                HasRequestedMesh = true;
+                _mapGenerator.RequestMeshData(mapData, _lod, OnMeshDataReceived);
             }
 
             private void OnMeshDataReceived(MeshGenerator.MeshData meshData)
             {
-                _meshFilter.mesh = meshData.CreateMesh();
+                Mesh = meshData.CreateMesh();
+                HasMesh = true;
+
+                _updateCallback.Invoke();
             }
         }
-        
+
+        /// <summary>
+        /// Editor settings for a single level of detail.
+        /// </summary>
+        [System.Serializable]
+        public struct LODInfo
+        {
+            /// <summary>
+            /// A higher number will reduce the amount of geometry.
+            /// </summary>
+            public int level;
+            public float distanceThreshold;
+        }
+
         #endregion Nested Types
 
-        #region Constants
-
-        private const float MaxViewDistance = 450;
-
-        #endregion Constants
+        [SerializeField]
+        private List<LODInfo> _detailLevels;
 
         [SerializeField]
         private Transform _viewer;
@@ -90,6 +219,10 @@ namespace ProceduralTerrain
         private Material _mapMaterial;
 
         #region Private Fields
+
+        private static float _maxViewDistance = 450;
+
+        private Vector2 _lastViewerPosition;
 
         private int _chunkSize;
         private int _chunkVisibleInViewDistance;
@@ -109,14 +242,23 @@ namespace ProceduralTerrain
         {
             _mapGenerator = GetComponent<MapGenerator>();
             _chunkSize = MapGenerationSettings.ChunkSize - 1;
-            _chunkVisibleInViewDistance = Mathf.RoundToInt(MaxViewDistance / _chunkSize);
+            _maxViewDistance = _detailLevels[_detailLevels.Count - 1].distanceThreshold;
+            _chunkVisibleInViewDistance = Mathf.RoundToInt(_maxViewDistance / _chunkSize);
+
+            UpdateVisibleChunks();
         }
 
         private void Update()
         {
             Vector3 currentPosition = _viewer.position;
             ViewerPosition = new Vector2(currentPosition.x, currentPosition.z);
-            UpdateVisibleChunks();
+
+            // Update only if viewer has moved enough.
+            if ((_lastViewerPosition - ViewerPosition).sqrMagnitude > SqrViewerMoveDistanceThreshold)
+            {
+                _lastViewerPosition = ViewerPosition;
+                UpdateVisibleChunks();
+            }
         }
 
         #endregion MonoBehaviour
@@ -145,7 +287,7 @@ namespace ProceduralTerrain
             {
                 TerrainChunk chunk = _terrainChunks[coord];
                         
-                chunk.Update();
+                chunk.UpdateTerrainChunks();
                         
                 if (chunk.IsVisible())
                 {
@@ -154,7 +296,7 @@ namespace ProceduralTerrain
             }
             else
             {
-                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, transform, _mapMaterial));
+                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, _detailLevels, transform, _mapMaterial));
             }
         }
 

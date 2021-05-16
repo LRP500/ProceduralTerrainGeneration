@@ -58,14 +58,21 @@ namespace ProceduralTerrain
 
         #endregion Nested Types
 
-        public static MeshData GenerateTerrainMesh(float[,] heightMap, MapGenerationSettings settings)
+        /// <summary>
+        /// Generates terrain mesh with specified level of detail.
+        /// </summary>
+        /// <param name="heightMap">The generated height map.</param>
+        /// <param name="settings">The map generation settings.</param>
+        /// <param name="lod">The level of detail.</param>
+        /// <returns>The generated mesh data.</returns>
+        public static MeshData GenerateTerrainMesh(float[,] heightMap, MapGenerationSettings settings, int lod)
         {
             int height = heightMap.GetLength(0);
             int width = heightMap.GetLength(1);
             float topLeftX = (width - 1) / -2f;
             float topLeftZ = (height - 1) / 2f;
 
-            int increment = settings.LevelOfDetails == 0 ? 1 : settings.LevelOfDetails * 2;
+            int increment = lod == 0 ? 1 : lod * 2;
             int verticesPerLine = (width - 1) / increment + 1;
             var meshData = new MeshData(verticesPerLine, verticesPerLine);
             int vertexIndex = 0;
@@ -94,6 +101,17 @@ namespace ProceduralTerrain
             }
 
             return meshData;
+        }
+
+        /// <summary>
+        /// Generates terrain mesh with preview settings.
+        /// </summary>
+        /// <param name="heightMap">The generated height map.</param>
+        /// <param name="settings">The map generation settings.</param>
+        /// <returns>The generated mesh data.</returns>
+        public static MeshData GenerateTerrainMesh(float[,] heightMap, MapGenerationSettings settings)
+        {
+            return GenerateTerrainMesh(heightMap, settings, settings.LODPreview);
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ProceduralTerrain.Utils;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ProceduralTerrain
 {
@@ -27,9 +28,11 @@ namespace ProceduralTerrain
         [SerializeField]
         private AnimationCurve _heightCurve;
 
+        [FormerlySerializedAs("_lodViewportPreview")]
         [Range(0, 6)]
         [SerializeField]
-        private int _levelOfDetails = 1;
+        [LabelText("LOD Preview")]
+        private int _lodPreview = 1;
 
         [MinValue(0)]
         [SerializeField]
@@ -62,7 +65,7 @@ namespace ProceduralTerrain
         public Vector2 Offset => _offset;
         public float HeightMultiplier => _heightMultiplier;
         public AnimationCurve HeightCurve => _heightCurve;
-        public int LevelOfDetails => _levelOfDetails;
+        public int LODPreview => _lodPreview;
         public int Seed => _seed;
         public float NoiseScale => _noiseScale;
         public int Octaves => _octaves;

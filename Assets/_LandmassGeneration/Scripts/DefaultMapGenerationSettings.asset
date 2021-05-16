@@ -122,7 +122,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  _levelOfDetails: 0
+  _lodPreview: 1
   _seed: 1
   _noiseScale: 25
   _octaves: 4

@@ -7,9 +7,10 @@ namespace ProceduralTerrain
         /// <summary>
         /// Generates and returns a noise map from settings.
         /// </summary>
-        /// <param name="settings"></param>
+        /// <param name="settings">The generation settings.</param>
+        /// <param name="center">The world position to generate from.</param>
         /// <returns></returns>
-        public static float[,] GenerateNoiseMap(MapGenerationSettings settings)
+        public static float[,] GenerateNoiseMap(MapGenerationSettings settings, Vector2 center)
         {
             float[,] noiseMap = new float[MapGenerationSettings.ChunkSize, MapGenerationSettings.ChunkSize];
             float scale = settings.NoiseScale == 0 ? 0.0001f : settings.NoiseScale;
@@ -18,7 +19,7 @@ namespace ProceduralTerrain
             const float halfWidth = MapGenerationSettings.ChunkSize / 2f; // Allows centering noise origin
             const float halfHeight = MapGenerationSettings.ChunkSize / 2f;
             var prng = new System.Random(settings.Seed);
-            var octaveOffsets = GenerateOctaveOffsets(settings.Octaves, settings.Offset, prng);
+            var octaveOffsets = GenerateOctaveOffsets(settings.Octaves, center + settings.Offset, prng);
 
             for (int y = 0; y < MapGenerationSettings.ChunkSize; ++y)
             {
