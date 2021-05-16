@@ -70,12 +70,15 @@ namespace ProceduralTerrain
             var meshData = new MeshData(verticesPerLine, verticesPerLine);
             int vertexIndex = 0;
 
+            // Important: we create a new local instance of animation curve as AnimationCurve is not thread safe.
+            var heightCurve = new AnimationCurve(settings.HeightCurve.keys);
+
             for (int y = 0; y < height; y += increment)
             {
                 for (int x = 0; x < width; x += increment)
                 {
                     // Add current vertex and UV to mesh data
-                    var posY = settings.HeightCurve.Evaluate(heightMap[x, y]) * settings.HeightMultiplier;
+                    var posY = heightCurve.Evaluate(heightMap[x, y]) * settings.HeightMultiplier;
                     meshData.SetVertex(new Vector3(topLeftX + x, posY, topLeftZ - y), vertexIndex);
                     meshData.SetUV(new Vector2(x / (float)width, y / (float)height), vertexIndex);
 

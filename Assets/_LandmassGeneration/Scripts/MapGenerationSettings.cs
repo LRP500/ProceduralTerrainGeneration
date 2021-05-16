@@ -31,7 +31,7 @@ namespace ProceduralTerrain
         [SerializeField]
         private int _levelOfDetails = 1;
 
-        [MinValue(1)]
+        [MinValue(0)]
         [SerializeField]
         private int _seed = 1;
 

@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace ProceduralTerrain
 {
+    [RequireComponent(typeof(MapGenerator))]
     public class TerrainSteaming : MonoBehaviour
     {
         #region Nested Types
@@ -14,23 +15,31 @@ namespace ProceduralTerrain
             private readonly GameObject _gameObject;
             private Vector2 _position;
             private Bounds _bounds;
-            
+
+            private MeshRenderer _meshRenderer;
+            private MeshFilter _meshFilter;
+
             #endregion Private Fields
 
             #region Public Methods
 
-            public TerrainChunk(Vector2 coord, int size, Transform parent)
+            public TerrainChunk(Vector2 coord, int size, Transform parent, Material material)
             {
                 _position = coord * size;
                 _bounds = new Bounds(_position, Vector2.one * size);
                 var worldPosition = new Vector3(_position.x, 0, _position.y);
 
-                _gameObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                _gameObject = new GameObject("Terrain Chunk");
+                _meshFilter = _gameObject.AddComponent<MeshFilter>();
+                _meshRenderer = _gameObject.AddComponent<MeshRenderer>();
+                _meshRenderer.material = material;
+                
                 _gameObject.transform.SetParent(parent);
                 _gameObject.transform.position = worldPosition;
-                _gameObject.transform.localScale = Vector3.one * size / 10f;
 
                 SetVisible(false);
+
+                _mapGenerator.RequestMapData(OnMapDataReceived);
             }
 
             /// <summary>
@@ -54,6 +63,16 @@ namespace ProceduralTerrain
             }
 
             #endregion Public Methods
+
+            private void OnMapDataReceived(MapGenerator.MapData mapData)
+            {
+                _mapGenerator.RequestMeshData(mapData, OnMeshDataReceived);
+            }
+
+            private void OnMeshDataReceived(MeshGenerator.MeshData meshData)
+            {
+                _meshFilter.mesh = meshData.CreateMesh();
+            }
         }
         
         #endregion Nested Types
@@ -67,6 +86,9 @@ namespace ProceduralTerrain
         [SerializeField]
         private Transform _viewer;
 
+        [SerializeField]
+        private Material _mapMaterial;
+
         #region Private Fields
 
         private int _chunkSize;
@@ -74,6 +96,8 @@ namespace ProceduralTerrain
 
         private readonly Dictionary<Vector2, TerrainChunk> _terrainChunks = new Dictionary<Vector2, TerrainChunk>();
         private readonly List<TerrainChunk> _visibleTerrainChunks = new List<TerrainChunk>();
+
+        private static MapGenerator _mapGenerator;
 
         #endregion Private Fields
 
@@ -83,6 +107,7 @@ namespace ProceduralTerrain
 
         private void Start()
         {
+            _mapGenerator = GetComponent<MapGenerator>();
             _chunkSize = MapGenerationSettings.ChunkSize - 1;
             _chunkVisibleInViewDistance = Mathf.RoundToInt(MaxViewDistance / _chunkSize);
         }
@@ -129,7 +154,7 @@ namespace ProceduralTerrain
             }
             else
             {
-                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, transform));
+                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, transform, _mapMaterial));
             }
         }
 
