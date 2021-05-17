@@ -6,6 +6,8 @@ namespace ProceduralTerrain
     [RequireComponent(typeof(MapGenerator))]
     public class TerrainSteaming : MonoBehaviour
     {
+        #region Constants
+
         /// <summary>
         /// The amount of distance the viewer needs to move from before updating terrain chunks.
         /// </summary>
@@ -15,6 +17,13 @@ namespace ProceduralTerrain
         /// Square root of <see cref="ViewerMoveDistanceThreshold"/> for calculation optimization.
         /// </summary>
         private const float SqrViewerMoveDistanceThreshold = ViewerMoveDistanceThreshold * ViewerMoveDistanceThreshold;
+
+        /// <summary>
+        /// Allows to scale generated terrain (to match player size for example)
+        /// </summary>
+        private const float Scale = 1f;
+
+        #endregion Constants
 
         #region Nested Types
 
@@ -53,7 +62,8 @@ namespace ProceduralTerrain
                 // Initialize visual state
                 _gameObject = new GameObject("Terrain Chunk");
                 _gameObject.transform.SetParent(parent);
-                _gameObject.transform.position = worldPosition;
+                _gameObject.transform.position = worldPosition * Scale;
+                _gameObject.transform.localScale = Vector3.one * Scale;
                 
                 _meshFilter = _gameObject.AddComponent<MeshFilter>();
                 _meshRenderer = _gameObject.AddComponent<MeshRenderer>();
@@ -65,7 +75,7 @@ namespace ProceduralTerrain
                 _lodMeshes = new LODMesh[detailLevels.Count];
                 for (int i = 0, length = detailLevels.Count; i < length; ++i)
                 {
-                    _lodMeshes[i] = new LODMesh(detailLevels[i].level, UpdateTerrainChunks);
+                    _lodMeshes[i] = new LODMesh(detailLevels[i].level, UpdateTerrainChunk);
                 }
                 
                 // Request map data
@@ -73,9 +83,9 @@ namespace ProceduralTerrain
             }
 
             /// <summary>
-            /// Updates each terrain chunk based on distance from viewer.
+            /// Updates terrain chunk based on distance from viewer.
             /// </summary>
-            public void UpdateTerrainChunks()
+            public void UpdateTerrainChunk()
             {
                 if (_mapDataReceived)
                 {
@@ -85,6 +95,7 @@ namespace ProceduralTerrain
                     if (visible)
                     {
                         SetMeshFromLODIndex(GetLODIndexFromViewerDistance(viewerDistanceFromNearestEdge));
+                        _visibleTerrainChunks.Add(this);
                     }
 
                     SetVisible(visible);
@@ -94,11 +105,6 @@ namespace ProceduralTerrain
             public void SetVisible(bool visible)
             {
                 _gameObject.SetActive(visible);
-            }
-
-            public bool IsVisible()
-            {
-                return _gameObject.activeSelf;
             }
 
             #endregion Public Methods
@@ -155,7 +161,7 @@ namespace ProceduralTerrain
 
                 _meshRenderer.material.mainTexture = texture;
 
-                UpdateTerrainChunks();
+                UpdateTerrainChunk();
             }
 
             #endregion Private Methods
@@ -171,7 +177,7 @@ namespace ProceduralTerrain
             public bool HasMesh { get; private set; }
             
             private readonly int _lod;
-            private System.Action _updateCallback;
+            private readonly System.Action _updateCallback;
 
             public LODMesh(int lod, System.Action updateCallback)
             {
@@ -228,7 +234,7 @@ namespace ProceduralTerrain
         private int _chunkVisibleInViewDistance;
 
         private readonly Dictionary<Vector2, TerrainChunk> _terrainChunks = new Dictionary<Vector2, TerrainChunk>();
-        private readonly List<TerrainChunk> _visibleTerrainChunks = new List<TerrainChunk>();
+        private static readonly List<TerrainChunk> _visibleTerrainChunks = new List<TerrainChunk>();
 
         private static MapGenerator _mapGenerator;
 
@@ -251,7 +257,7 @@ namespace ProceduralTerrain
         private void Update()
         {
             Vector3 currentPosition = _viewer.position;
-            ViewerPosition = new Vector2(currentPosition.x, currentPosition.z);
+            ViewerPosition = new Vector2(currentPosition.x, currentPosition.z) / Scale;
 
             // Update only if viewer has moved enough.
             if ((_lastViewerPosition - ViewerPosition).sqrMagnitude > SqrViewerMoveDistanceThreshold)
@@ -286,13 +292,7 @@ namespace ProceduralTerrain
             if (_terrainChunks.ContainsKey(coord))
             {
                 TerrainChunk chunk = _terrainChunks[coord];
-                        
-                chunk.UpdateTerrainChunks();
-                        
-                if (chunk.IsVisible())
-                {
-                    _visibleTerrainChunks.Add(chunk);
-                }
+                chunk.UpdateTerrainChunk();
             }
             else
             {
@@ -300,7 +300,7 @@ namespace ProceduralTerrain
             }
         }
 
-        private void ResetVisibleChunks()
+        private static void ResetVisibleChunks()
         {
             for (int i = 0, length = _visibleTerrainChunks.Count; i < length; ++i)
             {

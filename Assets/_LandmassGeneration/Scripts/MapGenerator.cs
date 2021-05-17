@@ -41,12 +41,15 @@ namespace ProceduralTerrain
         [OnValueChanged(nameof(OnSettingsChanged), true)]
         private MapGenerationSettings _settings;
 
+        [SerializeField]
+        private Noise.NormalizeMode _normalizeMode;
+
         public bool _autoUpdate = true;
 
         private MapDisplay _display;
 
         private readonly Queue<MapThreadInfo<MapData>> _mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
-        private readonly Queue<MapThreadInfo<MeshGenerator.MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshGenerator.MeshData>>();
+        private readonly Queue<MapThreadInfo<MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
         private void Update()
         {
@@ -63,7 +66,7 @@ namespace ProceduralTerrain
 
         private MapData GenerateMapData(Vector2 center)
         {
-            float[,] heightMap = Noise.GenerateNoiseMap(_settings, center);
+            float[,] heightMap = Noise.GenerateNoiseMap(_settings, center, _normalizeMode);
             Color[] colorMap = InitializeRegions(heightMap);
             return new MapData(heightMap, colorMap);
         }
@@ -80,11 +83,11 @@ namespace ProceduralTerrain
                     for (int i = 0, length = _settings.Regions.Count; i < length; i++)
                     {
                         TerrainType region = _settings.Regions[i];
-                        if (currentHeight <= region.Height)
+                        if (currentHeight >= region.Height)
                         {
                             colorMap[y * MapGenerationSettings.ChunkSize + x] = region.Color;
-                            break;
                         }
+                        else break;
                     }
                 }
             }
