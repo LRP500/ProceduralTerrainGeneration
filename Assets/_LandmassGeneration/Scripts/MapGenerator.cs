@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Sirenix.OdinInspector;
@@ -23,7 +24,7 @@ namespace ProceduralTerrain
             }
         }
 
-        public readonly struct MapThreadInfo<T>
+        private readonly struct MapThreadInfo<T>
         {
             public readonly System.Action<T> callback;
             public readonly T parameter;
@@ -48,8 +49,15 @@ namespace ProceduralTerrain
 
         private MapDisplay _display;
 
+        private float[,] _falloffMap;
+
         private readonly Queue<MapThreadInfo<MapData>> _mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
         private readonly Queue<MapThreadInfo<MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+
+        private void Awake()
+        {
+            _falloffMap = FalloffGenerator.GenerateFalloffMap(MapGenerationSettings.ChunkSize);
+        }
 
         private void Update()
         {
@@ -59,6 +67,7 @@ namespace ProceduralTerrain
 
         private void DrawMap()
         {
+            _falloffMap = FalloffGenerator.GenerateFalloffMap(MapGenerationSettings.ChunkSize);
             MapData mapData = GenerateMapData(Vector2.zero);
             _display = _display ? _display : GetComponent<MapDisplay>();
             _display.DrawMap(mapData, _settings);
@@ -79,6 +88,12 @@ namespace ProceduralTerrain
             {
                 for (int x = 0; x < MapGenerationSettings.ChunkSize; ++x)
                 {
+                    // Apply falloff
+                    if (_settings.UseFalloff)
+                    {
+                        noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - _falloffMap[x, y]);
+                    }
+
                     float currentHeight = noiseMap[x, y];
                     for (int i = 0, length = _settings.Regions.Count; i < length; i++)
                     {

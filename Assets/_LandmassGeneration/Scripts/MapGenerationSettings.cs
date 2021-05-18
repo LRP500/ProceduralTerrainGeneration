@@ -27,6 +27,9 @@ namespace ProceduralTerrain
         [SerializeField]
         private AnimationCurve _heightCurve;
 
+        [SerializeField]
+        private bool _useFalloff;
+
         [Range(0, 6)]
         [SerializeField]
         [LabelText("LOD Preview")]
@@ -63,6 +66,7 @@ namespace ProceduralTerrain
         public Vector2 Offset => _offset;
         public float HeightMultiplier => _heightMultiplier;
         public AnimationCurve HeightCurve => _heightCurve;
+        public bool UseFalloff => _useFalloff;
         public int LODPreview => _lodPreview;
         public int Seed => _seed;
         public float NoiseScale => _noiseScale;

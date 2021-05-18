@@ -10,6 +10,7 @@ namespace ProceduralTerrain
         {
             HeightMap,
             ColorMap,
+            FalloffMap,
             Mesh
         }
 
@@ -40,6 +41,11 @@ namespace ProceduralTerrain
             else if (_drawMode == DrawMode.ColorMap)
             {
                 DrawTexture(coloredTexture);
+            }
+            else if (_drawMode == DrawMode.FalloffMap)
+            {
+                var fallOffMap = FalloffGenerator.GenerateFalloffMap(MapGenerationSettings.ChunkSize);
+                DrawTexture(TextureGenerator.TextureFromHeightMap(fallOffMap));
             }
             else if (_drawMode == DrawMode.Mesh)
             {

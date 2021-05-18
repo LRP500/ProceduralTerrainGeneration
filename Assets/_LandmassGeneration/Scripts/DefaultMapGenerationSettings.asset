@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TerrainType
   m_EditorClassIdentifier: 
   _name: Grass 2
-  _height: 0.5
+  _height: 0.55
   _color: {r: 0.10898895, g: 0.3679245, b: 0.10898895, a: 0}
 --- !u!114 &-7704222511843712679
 MonoBehaviour:
@@ -43,7 +43,7 @@ MonoBehaviour:
   m_Name: TerrainType
   m_EditorClassIdentifier: 
   _name: Rock 2
-  _height: 0.9
+  _height: 0.82
   _color: {r: 0.1981132, g: 0.17635278, b: 0.13718404, a: 0}
 --- !u!114 &-3601019529680427084
 MonoBehaviour:
@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Name: DefaultMapGenerationSettings
   m_EditorClassIdentifier: 
   _offset: {x: 0, y: 0}
-  _heightMultiplier: 13
+  _heightMultiplier: 237.6
   _heightCurve:
     serializedVersion: 2
     m_Curve:
@@ -102,30 +102,31 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.3
-      value: 0
-      inSlope: 0
-      outSlope: 0
+      time: 0.40034482
+      value: 0.009708988
+      inSlope: 0.10225573
+      outSlope: 0.10225573
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
-      outWeight: 0.33333334
+      outWeight: 0.1645712
     - serializedVersion: 3
-      time: 1.2
-      value: 1.2
-      inSlope: 1.3333334
-      outSlope: 1.3333334
-      tangentMode: 34
+      time: 1.0963991
+      value: 1.094049
+      inSlope: 0.9961966
+      outSlope: 0.9961966
+      tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
+      inWeight: 0.085961424
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  _useFalloff: 1
   _lodPreview: 0
-  _seed: 1
-  _noiseScale: 25
-  _octaves: 4
+  _seed: 211
+  _noiseScale: 111.59
+  _octaves: 8
   _persistance: 0.5
   _lacunarity: 2
   _regions:
@@ -150,7 +151,7 @@ MonoBehaviour:
   m_Name: TerrainType
   m_EditorClassIdentifier: 
   _name: Rock
-  _height: 0.7
+  _height: 0.75
   _color: {r: 0.26415092, g: 0.22209689, b: 0.15300816, a: 0}
 --- !u!114 &6516912687826986754
 MonoBehaviour:
@@ -180,5 +181,5 @@ MonoBehaviour:
   m_Name: TerrainType
   m_EditorClassIdentifier: 
   _name: Snow
-  _height: 1
+  _height: 0.9
   _color: {r: 1, g: 1, b: 1, a: 0}
