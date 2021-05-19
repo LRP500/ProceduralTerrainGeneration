@@ -11,7 +11,8 @@ namespace ProceduralTerrain
     {
         #region Constants
 
-        public const int ChunkSize = 241;
+        // 241 - 2 to compensate for borders used to calculate seamless normals
+        public const int ChunkSize = 239;
 
         #endregion Constants
 

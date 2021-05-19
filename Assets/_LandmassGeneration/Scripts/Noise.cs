@@ -33,7 +33,14 @@ namespace ProceduralTerrain
         /// <returns></returns>
         public static float[,] GenerateNoiseMap(MapGenerationSettings settings, Vector2 center, NormalizeMode normalizeMode)
         {
-            float[,] noiseMap = new float[MapGenerationSettings.ChunkSize, MapGenerationSettings.ChunkSize];
+            // We add 2 to chunk size to compensate for borders used to calculate seamless normals
+            const int chunkSize = MapGenerationSettings.ChunkSize + 2;
+            
+            // Allows centering noise origin
+            const float halfWidth = chunkSize / 2f;
+            const float halfHeight = chunkSize / 2f;
+
+            float[,] noiseMap = new float[chunkSize, chunkSize];
             float scale = settings.NoiseScale == 0 ? 0.0001f : settings.NoiseScale;
             
             var prng = new System.Random(settings.Seed);
@@ -42,13 +49,9 @@ namespace ProceduralTerrain
             float minLocalHeight = float.MaxValue;
             float maxLocalheight = float.MinValue;
 
-            // Allows centering noise origin
-            const float halfWidth = MapGenerationSettings.ChunkSize / 2f;
-            const float halfHeight = MapGenerationSettings.ChunkSize / 2f;
-
-            for (int y = 0; y < MapGenerationSettings.ChunkSize; ++y)
+            for (int y = 0; y < chunkSize; ++y)
             {
-                for (int x = 0; x < MapGenerationSettings.ChunkSize; ++x)
+                for (int x = 0; x < chunkSize; ++x)
                 {
                     float amplitude = 1;
                     float frequency = 1;
