@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Name: DefaultMapGenerationSettings
   m_EditorClassIdentifier: 
   _offset: {x: 0, y: 0}
-  _heightMultiplier: 35
+  _heightMultiplier: 15
   _heightCurve:
     serializedVersion: 2
     m_Curve:

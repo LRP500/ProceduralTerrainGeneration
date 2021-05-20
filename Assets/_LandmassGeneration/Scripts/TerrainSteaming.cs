@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro.EditorUtilities;
 using UnityEngine;
 
 namespace ProceduralTerrain
@@ -40,9 +41,11 @@ namespace ProceduralTerrain
 
             private readonly MeshRenderer _meshRenderer;
             private readonly MeshFilter _meshFilter;
+            private readonly MeshCollider _meshCollider;
 
             private readonly LODInfo[] _detailLevels;
             private readonly LODMesh[] _lodMeshes;
+            private readonly LODMesh _collisionMesh;
             
             private MapGenerator.MapData _mapData;
             private bool _mapDataReceived;
@@ -66,6 +69,7 @@ namespace ProceduralTerrain
                 _gameObject.transform.localScale = Vector3.one * Scale;
                 
                 _meshFilter = _gameObject.AddComponent<MeshFilter>();
+                _meshCollider = _gameObject.AddComponent<MeshCollider>();
                 _meshRenderer = _gameObject.AddComponent<MeshRenderer>();
                 _meshRenderer.material = material;
                 
@@ -76,6 +80,11 @@ namespace ProceduralTerrain
                 for (int i = 0, length = detailLevels.Count; i < length; ++i)
                 {
                     _lodMeshes[i] = new LODMesh(detailLevels[i].level, UpdateTerrainChunk);
+
+                    if (detailLevels[i].useForCollider)
+                    {
+                        _collisionMesh = _lodMeshes[i];
+                    }
                 }
                 
                 // Request map data
@@ -134,6 +143,7 @@ namespace ProceduralTerrain
 
             private void SetMeshFromLODIndex(int lodIndex)
             {
+                // Terrain chunk mesh
                 if (lodIndex != _previousLODIndex)
                 {
                     LODMesh lodMesh = _lodMeshes[lodIndex];
@@ -147,6 +157,24 @@ namespace ProceduralTerrain
                     {
                         lodMesh.RequestMesh(_mapData);
                     }
+                }
+
+                // Collider mesh
+                if (lodIndex == 0)
+                {
+                   UpdateCollisionMesh();
+                }
+            }
+
+            private void UpdateCollisionMesh()
+            {
+                if (_collisionMesh.HasMesh)
+                {
+                    _meshCollider.sharedMesh = _collisionMesh.Mesh;
+                }
+                else if (!_collisionMesh.HasRequestedMesh) 
+                {
+                    _collisionMesh.RequestMesh(_mapData);
                 }
             }
 
@@ -210,7 +238,9 @@ namespace ProceduralTerrain
             /// A higher number will reduce the amount of geometry.
             /// </summary>
             public int level;
+
             public float distanceThreshold;
+            public bool useForCollider;
         }
 
         #endregion Nested Types

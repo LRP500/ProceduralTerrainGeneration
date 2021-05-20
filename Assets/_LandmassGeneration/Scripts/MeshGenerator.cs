@@ -23,6 +23,8 @@ namespace ProceduralTerrain
             private int _triangleIndex;
             private int _borderTriangleIndex;
 
+            private Vector3[] _bakedNormals;
+
             public MeshData(int verticesPerLine)
             {
                 Vertices = new Vector3[verticesPerLine * verticesPerLine];
@@ -39,8 +41,8 @@ namespace ProceduralTerrain
                 {
                     vertices = Vertices,
                     triangles = Triangles,
-                    uv = UV,
-                    normals = CalculateNormals()
+                    normals = _bakedNormals,
+                    uv = UV
                 };
 
                 return mesh;
@@ -98,6 +100,11 @@ namespace ProceduralTerrain
                 }
 
                 return vertexNormals;
+            }
+
+            public void BakeNormals()
+            {
+                _bakedNormals = CalculateNormals();
             }
 
             private Vector3 SurfaceNormalFromIndices(int a, int b, int c)
@@ -213,6 +220,8 @@ namespace ProceduralTerrain
                     }
                 }
             }
+
+            meshData.BakeNormals();
 
             return meshData;
         }
