@@ -184,8 +184,8 @@ namespace ProceduralTerrain
                 _mapDataReceived = true;
 
                 Texture2D texture = TextureGenerator.TextureFromColorMap(mapData.colorMap,
-                    MapGenerationSettings.ChunkSize,
-                    MapGenerationSettings.ChunkSize);
+                    MapGenerator.ChunkSize,
+                    MapGenerator.ChunkSize);
 
                 _meshRenderer.material.mainTexture = texture;
 
@@ -277,7 +277,7 @@ namespace ProceduralTerrain
         private void Start()
         {
             _mapGenerator = GetComponent<MapGenerator>();
-            _chunkSize = MapGenerationSettings.ChunkSize - 1;
+            _chunkSize = MapGenerator.ChunkSize - 1;
             _maxViewDistance = _detailLevels[_detailLevels.Count - 1].distanceThreshold;
             _chunkVisibleInViewDistance = Mathf.RoundToInt(_maxViewDistance / _chunkSize);
 

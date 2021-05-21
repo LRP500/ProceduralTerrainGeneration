@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Sirenix.OdinInspector;
@@ -8,7 +7,7 @@ using MeshData = ProceduralTerrain.MeshGenerator.MeshData;
 namespace ProceduralTerrain
 {
     [RequireComponent(typeof(MapDisplay))]
-    public class MapGenerator : MonoBehaviour
+    public class MapGenerator : Singleton<MapGenerator>
     {
         #region Nested Types
 
@@ -54,9 +53,15 @@ namespace ProceduralTerrain
         private readonly Queue<MapThreadInfo<MapData>> _mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
         private readonly Queue<MapThreadInfo<MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
+        // Chunk size must be dividable by all possible LOD values
+        // (e.g. 240 is dividable by all numbers up to twelve)
+        // (- 2 to compensate for borders used to calculate seamless normals)
+        // With flat shading we need 3x the triangles so we use a smaller chunk size.
+        public static int ChunkSize => Instance._settings.UseFlatShading ? 95 : 239;
+
         private void Awake()
         {
-            _falloffMap = FalloffGenerator.GenerateFalloffMap(MapGenerationSettings.ChunkSize);
+            _falloffMap = FalloffGenerator.GenerateFalloffMap(ChunkSize);
         }
 
         private void Update()
@@ -67,7 +72,7 @@ namespace ProceduralTerrain
 
         private void DrawMap()
         {
-            _falloffMap = FalloffGenerator.GenerateFalloffMap(MapGenerationSettings.ChunkSize);
+            _falloffMap = FalloffGenerator.GenerateFalloffMap(ChunkSize);
             MapData mapData = GenerateMapData(Vector2.zero);
             _display = _display ? _display : GetComponent<MapDisplay>();
             _display.DrawMap(mapData, _settings);
@@ -82,11 +87,11 @@ namespace ProceduralTerrain
 
         private Color[] InitializeRegions(float[,] noiseMap)
         {
-            Color[] colorMap = new Color[MapGenerationSettings.ChunkSize * MapGenerationSettings.ChunkSize];
+            Color[] colorMap = new Color[ChunkSize * ChunkSize];
 
-            for (int y = 0; y < MapGenerationSettings.ChunkSize; ++y)
+            for (int y = 0; y < ChunkSize; ++y)
             {
-                for (int x = 0; x < MapGenerationSettings.ChunkSize; ++x)
+                for (int x = 0; x < ChunkSize; ++x)
                 {
                     // Apply falloff
                     if (_settings.UseFalloff)
@@ -100,7 +105,7 @@ namespace ProceduralTerrain
                         TerrainType region = _settings.Regions[i];
                         if (currentHeight >= region.Height)
                         {
-                            colorMap[y * MapGenerationSettings.ChunkSize + x] = region.Color;
+                            colorMap[y * ChunkSize + x] = region.Color;
                         }
                         else break;
                     }

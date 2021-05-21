@@ -12,8 +12,8 @@ namespace ProceduralTerrain
 
         public class MeshData
         {
-            private Vector3[] Vertices { get; }
-            private Vector2[] UV { get; }
+            private Vector3[] Vertices { get; set; }
+            private Vector2[] UV { get; set; }
             private int[] Triangles { get; }
 
             /// Borders are used to calculate normals so chunks can blend correctly
@@ -25,7 +25,9 @@ namespace ProceduralTerrain
 
             private Vector3[] _bakedNormals;
 
-            public MeshData(int verticesPerLine)
+            private bool _useFlatShading;
+
+            public MeshData(int verticesPerLine, bool useFlatShading)
             {
                 Vertices = new Vector3[verticesPerLine * verticesPerLine];
                 UV = new Vector2[verticesPerLine * verticesPerLine];
@@ -33,6 +35,7 @@ namespace ProceduralTerrain
 
                 _borderVertices = new Vector3[verticesPerLine * 4 + 4];
                 _borderTriangles = new int[24 * verticesPerLine];
+                _useFlatShading = useFlatShading;
             }
 
             public Mesh CreateMesh()
@@ -41,9 +44,17 @@ namespace ProceduralTerrain
                 {
                     vertices = Vertices,
                     triangles = Triangles,
-                    normals = _bakedNormals,
                     uv = UV
                 };
+
+                if (_useFlatShading)
+                {
+                    mesh.RecalculateNormals();
+                }
+                else
+                {
+                    mesh.normals = _bakedNormals;
+                }
 
                 return mesh;
             }
@@ -102,9 +113,37 @@ namespace ProceduralTerrain
                 return vertexNormals;
             }
 
-            public void BakeNormals()
+            public void CalculateShading()
+            {
+                if (_useFlatShading)
+                {
+                    FlatShading();
+                }
+                else
+                {
+                    BakeNormals();
+                }
+            }
+
+            private void BakeNormals()
             {
                 _bakedNormals = CalculateNormals();
+            }
+
+            public void FlatShading()
+            {
+                Vector3[] flatShadedVertices = new Vector3[Triangles.Length];
+                Vector2[] flatShadedUV = new Vector2[Triangles.Length];
+
+                for (int i = 0, length = Triangles.Length; i < length; ++i)
+                {
+                    flatShadedVertices[i] = Vertices[Triangles[i]];
+                    flatShadedUV[i] = UV[Triangles[i]];
+                    Triangles[i] = i;
+                }
+
+                Vertices = flatShadedVertices;
+                UV = flatShadedUV;
             }
 
             private Vector3 SurfaceNormalFromIndices(int a, int b, int c)
@@ -172,7 +211,7 @@ namespace ProceduralTerrain
             float topLeftZ = (meshSizeUnsimplified - 1) / 2f;
 
             int verticesPerLine = (meshSize - 1) / increment + 1;
-            var meshData = new MeshData(verticesPerLine);
+            var meshData = new MeshData(verticesPerLine, settings.UseFlatShading);
 
             int[,] vertexIndicesMap = new int[borderedSize, borderedSize];
             int meshVertexIndex = 0;
@@ -221,7 +260,7 @@ namespace ProceduralTerrain
                 }
             }
 
-            meshData.BakeNormals();
+            meshData.CalculateShading();
 
             return meshData;
         }

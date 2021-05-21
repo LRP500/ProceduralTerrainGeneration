@@ -34,11 +34,11 @@ namespace ProceduralTerrain
         public static float[,] GenerateNoiseMap(MapGenerationSettings settings, Vector2 center, NormalizeMode normalizeMode)
         {
             // We add 2 to chunk size to compensate for borders used to calculate seamless normals
-            const int chunkSize = MapGenerationSettings.ChunkSize + 2;
+            int chunkSize = MapGenerator.ChunkSize + 2;
             
             // Allows centering noise origin
-            const float halfWidth = chunkSize / 2f;
-            const float halfHeight = chunkSize / 2f;
+            float halfWidth = chunkSize / 2f;
+            float halfHeight = chunkSize / 2f;
 
             float[,] noiseMap = new float[chunkSize, chunkSize];
             float scale = settings.NoiseScale == 0 ? 0.0001f : settings.NoiseScale;

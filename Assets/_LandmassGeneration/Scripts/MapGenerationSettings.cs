@@ -9,13 +9,6 @@ namespace ProceduralTerrain
     [CreateAssetMenu(menuName = "Map Generation Settings")]
     public class MapGenerationSettings : ScriptableObject
     {
-        #region Constants
-
-        // 241 - 2 to compensate for borders used to calculate seamless normals
-        public const int ChunkSize = 239;
-
-        #endregion Constants
-
         #region Serialized Fields
 
         [SerializeField]
@@ -30,6 +23,9 @@ namespace ProceduralTerrain
 
         [SerializeField]
         private bool _useFalloff;
+
+        [SerializeField]
+        private bool _useFlatShading;
 
         [Range(0, 6)]
         [SerializeField]
@@ -68,6 +64,7 @@ namespace ProceduralTerrain
         public float HeightMultiplier => _heightMultiplier;
         public AnimationCurve HeightCurve => _heightCurve;
         public bool UseFalloff => _useFalloff;
+        public bool UseFlatShading => _useFlatShading;
         public int LODPreview => _lodPreview;
         public int Seed => _seed;
         public float NoiseScale => _noiseScale;

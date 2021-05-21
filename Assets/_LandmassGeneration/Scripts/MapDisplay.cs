@@ -30,9 +30,8 @@ namespace ProceduralTerrain
 
         public void DrawMap(MapGenerator.MapData data, MapGenerationSettings settings)
         {
-            Texture2D coloredTexture = TextureGenerator.TextureFromColorMap(data.colorMap,
-                MapGenerationSettings.ChunkSize,
-                MapGenerationSettings.ChunkSize);
+            int size = MapGenerator.ChunkSize;
+            Texture2D coloredTexture = TextureGenerator.TextureFromColorMap(data.colorMap, size, size);
 
             if (_drawMode == DrawMode.HeightMap)
             {
@@ -44,7 +43,7 @@ namespace ProceduralTerrain
             }
             else if (_drawMode == DrawMode.FalloffMap)
             {
-                var fallOffMap = FalloffGenerator.GenerateFalloffMap(MapGenerationSettings.ChunkSize);
+                var fallOffMap = FalloffGenerator.GenerateFalloffMap(size);
                 DrawTexture(TextureGenerator.TextureFromHeightMap(fallOffMap));
             }
             else if (_drawMode == DrawMode.Mesh)

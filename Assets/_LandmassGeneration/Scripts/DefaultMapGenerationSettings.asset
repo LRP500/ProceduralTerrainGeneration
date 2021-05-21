@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Name: DefaultMapGenerationSettings
   m_EditorClassIdentifier: 
   _offset: {x: 0, y: 0}
-  _heightMultiplier: 15
+  _heightMultiplier: 200
   _heightCurve:
     serializedVersion: 2
     m_Curve:
@@ -102,8 +102,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.40034482
-      value: 0.009708988
+      time: 0.5
+      value: 0
       inSlope: 0.10225573
       outSlope: 0.10225573
       tangentMode: 0
@@ -123,8 +123,9 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   _useFalloff: 0
+  _useFlatShading: 0
   _lodPreview: 0
-  _seed: 211
+  _seed: 158
   _noiseScale: 50
   _octaves: 8
   _persistance: 0.5
