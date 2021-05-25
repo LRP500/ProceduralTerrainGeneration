@@ -4,13 +4,8 @@ using UnityEngine;
 /// Inherit from this base class to create a singleton.
 /// e.g. public class MyClassName : Singleton<MyClassName> {}
 /// </summary>
-public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
+public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
-    /// <summary>
-    /// Check to see if we're about to be destroyed. 
-    /// </summary>
-    private static bool _shuttingDown;
-    
     /// <summary>
     /// Used to make singleton thread-safe by locking instance when accessed.
     /// </summary>
@@ -28,12 +23,6 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         get
         {
-            if (_shuttingDown)
-            {
-                Debug.LogWarning($"[Singleton] Instance '{typeof(T)}' already destroyed. Returning null.");
-                return null;
-            }
- 
             lock (_lock)
             {
                 if (_instance == null)
@@ -57,15 +46,5 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
                 return _instance;
             }
         }
-    }
- 
-    private void OnApplicationQuit()
-    {
-        _shuttingDown = true;
-    }
- 
-    private void OnDestroy()
-    {
-        _shuttingDown = true;
     }
 }
