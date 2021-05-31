@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed578c42883c423429ee56b71b8a1965, type: 3}
   m_Name: DefaultTerrain
   m_EditorClassIdentifier: 
-  _heightMultiplier: 23.1
+  _heightMultiplier: 28.5
   _heightCurve:
     serializedVersion: 2
     m_Curve:
@@ -26,17 +26,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 0.4
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1.1001017
-      value: 1.1083888
+      time: 1
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -47,6 +38,6 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   _worldScale: 2
-  _useFalloff: 1
+  _useFalloff: 0
   _useFlatShading: 0
   _lodPreview: 0

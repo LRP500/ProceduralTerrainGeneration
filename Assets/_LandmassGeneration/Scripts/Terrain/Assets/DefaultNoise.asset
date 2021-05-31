@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _offset: {x: 0, y: 0}
   _seed: 0
-  _noiseScale: 67.8
-  _octaves: 8
-  _persistance: 0.429
+  _noiseScale: 30
+  _octaves: 6
+  _persistance: 0.47
   _lacunarity: 2

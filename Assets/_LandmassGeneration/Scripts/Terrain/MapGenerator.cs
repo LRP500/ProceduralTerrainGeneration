@@ -36,12 +36,19 @@ namespace ProceduralTerrain
         #endregion Nested Types
 
         [SerializeField]
-        [OnValueChanged(nameof(OnDataChanged), true)]
+        [OnValueChanged(nameof(OnNoiseDataChanged), true)]
         private NoiseData _noiseData;
 
         [SerializeField]
-        [OnValueChanged(nameof(OnDataChanged), true)]
+        [OnValueChanged(nameof(OnTerrainDataChanged), true)]
         private TerrainData _terrainData;
+
+        [SerializeField]
+        [OnValueChanged(nameof(OnTextureDataChanged), true)]
+        private TextureData _textureData;
+
+        [SerializeField]
+        private Material _terrainMaterial;
 
         [SerializeField]
         private Noise.NormalizeMode _normalizeMode;
@@ -63,6 +70,7 @@ namespace ProceduralTerrain
 
         public NoiseData NoiseData => _noiseData;
         public TerrainData TerrainData => _terrainData;
+        public TextureData TextureData => _textureData;
 
         private void Update()
         {
@@ -74,6 +82,7 @@ namespace ProceduralTerrain
         {
             MapData mapData = GenerateMapData(Vector2.zero);
             _display = _display ? _display : GetComponent<MapDisplay>();
+            _textureData.ApplyToMaterial(_terrainMaterial);
             _display.DrawMap(mapData, _terrainData);
         }
 
@@ -86,6 +95,8 @@ namespace ProceduralTerrain
             {
                ApplyFalloff(heightMap, ChunkSize + 2);
             }
+
+            _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
 
             return new MapData(heightMap);
         }
@@ -177,12 +188,25 @@ namespace ProceduralTerrain
             DrawMap();
         }
 
-        private void OnDataChanged()
+        private void OnNoiseDataChanged()
         {
             if (_autoUpdate)
             {
                 DrawMap();
             }
+        }
+
+        private void OnTerrainDataChanged()
+        {
+            if (_autoUpdate)
+            {
+                DrawMap();
+            }
+        }
+
+        private void OnTextureDataChanged()
+        {
+            _textureData.ApplyToMaterial(_terrainMaterial);
         }
 
         #endregion Editor

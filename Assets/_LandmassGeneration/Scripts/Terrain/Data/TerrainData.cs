@@ -41,6 +41,9 @@ namespace ProceduralTerrain
         public bool UseFlatShading => _useFlatShading;
         public int LODPreview => _lodPreview;
 
+        public float MinHeight => WorldScale * HeightMultiplier * HeightCurve.Evaluate(0);
+        public float MaxHeight => WorldScale * HeightMultiplier * HeightCurve.Evaluate(1);
+
         #endregion Properties
     }
 }
