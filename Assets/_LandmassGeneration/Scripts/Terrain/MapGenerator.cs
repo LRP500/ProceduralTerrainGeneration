@@ -96,7 +96,7 @@ namespace ProceduralTerrain
                ApplyFalloff(heightMap, ChunkSize + 2);
             }
 
-            _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
+            TextureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
 
             return new MapData(heightMap);
         }
