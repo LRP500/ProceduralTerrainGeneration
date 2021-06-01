@@ -72,6 +72,12 @@ namespace ProceduralTerrain
         public TerrainData TerrainData => _terrainData;
         public TextureData TextureData => _textureData;
 
+        private void Awake()
+        {
+            _textureData.ApplyToMaterial(_terrainMaterial);
+            _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
+        }
+
         private void Update()
         {
             ProcessMapDataInfoQueue();
@@ -82,6 +88,7 @@ namespace ProceduralTerrain
         {
             MapData mapData = GenerateMapData(Vector2.zero);
             _display = _display ? _display : GetComponent<MapDisplay>();
+            _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
             _textureData.ApplyToMaterial(_terrainMaterial);
             _display.DrawMap(mapData, _terrainData);
         }
@@ -95,8 +102,6 @@ namespace ProceduralTerrain
             {
                ApplyFalloff(heightMap, ChunkSize + 2);
             }
-
-            TextureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
 
             return new MapData(heightMap);
         }

@@ -91,7 +91,7 @@ namespace ProceduralTerrain
             return textureArray;
         }
 
-        public static void UpdateMeshHeights(Material material, float minHeight, float maxHeight)
+        public void UpdateMeshHeights(Material material, float minHeight, float maxHeight)
         {
             material.SetFloat(MinHeight, minHeight);
             material.SetFloat(MaxHeight, maxHeight);
