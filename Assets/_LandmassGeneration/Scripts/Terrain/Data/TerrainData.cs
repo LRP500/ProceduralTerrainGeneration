@@ -25,11 +25,6 @@ namespace ProceduralTerrain
         [SerializeField]
         private bool _useFlatShading;
 
-        [Range(0, 6)]
-        [SerializeField]
-        [LabelText("LOD Preview")]
-        private int _lodPreview = 1;
-
         #endregion Serialized Fields
 
         #region Properties
@@ -39,7 +34,6 @@ namespace ProceduralTerrain
         public float WorldScale => _worldScale;
         public bool UseFalloff => _useFalloff;
         public bool UseFlatShading => _useFlatShading;
-        public int LODPreview => _lodPreview;
 
         public float MinHeight => WorldScale * HeightMultiplier * HeightCurve.Evaluate(0);
         public float MaxHeight => WorldScale * HeightMultiplier * HeightCurve.Evaluate(1);

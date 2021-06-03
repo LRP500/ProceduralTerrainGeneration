@@ -8,6 +8,16 @@ namespace ProceduralTerrain
     /// </summary>
     public static class MeshGenerator
     {
+        /// <summary>
+        /// The maximum number of levels of detail currently supported.
+        /// </summary>
+        public const int SupportedLODCount = 5;
+
+        public const int SupportedChunkSizeCount = 9;
+        public const int SupportedFlatShadedChunkSizeCount = 3;
+        public static readonly int[] SupportedChunkSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240 };
+        public static readonly int[] SupportedFlatShadedChunkSizes = { 48, 72, 96 };
+
         #region Nested Types
 
         public class MeshData
@@ -263,17 +273,6 @@ namespace ProceduralTerrain
             meshData.CalculateShading();
 
             return meshData;
-        }
-
-        /// <summary>
-        /// Generates terrain mesh with preview settings.
-        /// </summary>
-        /// <param name="heightMap">The generated height map.</param>
-        /// <param name="settings">The map generation settings.</param>
-        /// <returns>The generated mesh data.</returns>
-        public static MeshData GenerateTerrainMesh(float[,] heightMap, TerrainData data)
-        {
-            return GenerateTerrainMesh(heightMap, data, data.LODPreview);
         }
     }
 }

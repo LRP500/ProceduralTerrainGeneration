@@ -33,7 +33,7 @@ namespace ProceduralTerrain
             return _mapGenerator;
         }
 
-        public void DrawMap(MapGenerator.MapData mapData, TerrainData terrainData)
+        public void DrawMap(MapGenerator.MapData mapData, TerrainData terrainData, int editorPreviewLOD)
         {
             if (_drawMode == DrawMode.HeightMap)
             {
@@ -41,12 +41,12 @@ namespace ProceduralTerrain
             }
             else if (_drawMode == DrawMode.FalloffMap)
             {
-                var fallOffMap = FalloffGenerator.GenerateFalloffMap(_mapGenerator.ChunkSize);
+                var fallOffMap = FalloffGenerator.GenerateFalloffMap(_mapGenerator.GetChunkSize());
                 DrawTexture(TextureGenerator.TextureFromHeightMap(fallOffMap));
             }
             else if (_drawMode == DrawMode.Mesh)
             {
-                DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, terrainData));
+                DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, terrainData, editorPreviewLOD));
             }
         }
 

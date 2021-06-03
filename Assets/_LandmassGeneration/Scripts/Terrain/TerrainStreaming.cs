@@ -4,12 +4,12 @@ using UnityEngine;
 namespace ProceduralTerrain
 {
     [RequireComponent(typeof(MapGenerator))]
-    public class TerrainSteaming : MonoBehaviour
+    public class TerrainStreaming : MonoBehaviour
     {
         #region Constants
 
         /// <summary>
-        /// The amount of distance the viewer needs to move from before updating terrain chunks.
+        /// The distance the viewer needs to move from before updating terrain chunks.
         /// </summary>
         private const float ViewerMoveDistanceThreshold = 25f;
         
@@ -17,6 +17,11 @@ namespace ProceduralTerrain
         /// Square root of <see cref="ViewerMoveDistanceThreshold"/> for calculation optimization.
         /// </summary>
         private const float SqrViewerMoveDistanceThreshold = ViewerMoveDistanceThreshold * ViewerMoveDistanceThreshold;
+
+        /// <summary>
+        /// The distance from viewer from which chunk colliders are updated.
+        /// </summary>
+        private const float ColliderGenerationDistanceThreshold = 5;
 
         #endregion Constants
 
@@ -39,19 +44,25 @@ namespace ProceduralTerrain
 
             private readonly LODInfo[] _detailLevels;
             private readonly LODMesh[] _lodMeshes;
-            private readonly LODMesh _collisionMesh;
-            
+            private readonly int _colliderLODIndex;
+
             private MapGenerator.MapData _mapData;
             private bool _mapDataReceived;
+            private bool _hasSetCollider;
             private int _previousLODIndex = -1;
 
             #endregion Private Fields
 
+            private bool IsVisible() => _gameObject.activeSelf;
+            public Vector2 Coordinates { get; set; }
+
             #region Public Methods
 
-            public TerrainChunk(Vector2 coord, int size, List<LODInfo> detailLevels, Transform parent, Material material)
+            public TerrainChunk(Vector2 coord, int size, List<LODInfo> detailLevels, int colliderLODIndex, Transform parent, Material material)
             {
+                Coordinates = coord;
                 _detailLevels = detailLevels.ToArray();
+                _colliderLODIndex = colliderLODIndex;
                 _position = coord * size;
                 _bounds = new Bounds(_position, Vector2.one * size);
                 var worldPosition = new Vector3(_position.x, 0, _position.y);
@@ -73,11 +84,12 @@ namespace ProceduralTerrain
                 _lodMeshes = new LODMesh[detailLevels.Count];
                 for (int i = 0, length = detailLevels.Count; i < length; ++i)
                 {
-                    _lodMeshes[i] = new LODMesh(detailLevels[i].level, UpdateTerrainChunk);
-
-                    if (detailLevels[i].useForCollider)
+                    _lodMeshes[i] = new LODMesh(detailLevels[i].level);
+                    _lodMeshes[i].AddCallback(UpdateTerrainChunk);
+                    
+                    if (i == _colliderLODIndex)
                     {
-                        _collisionMesh = _lodMeshes[i];
+                        _lodMeshes[i].AddCallback(UpdateCollisionMesh);
                     }
                 }
                 
@@ -93,19 +105,31 @@ namespace ProceduralTerrain
                 if (_mapDataReceived)
                 {
                     float viewerDistanceFromNearestEdge = Mathf.Sqrt(_bounds.SqrDistance(ViewerPosition));
+                    bool wasVisible = IsVisible();
                     bool visible = viewerDistanceFromNearestEdge <= _maxViewDistance;
 
                     if (visible)
                     {
                         SetMeshFromLODIndex(GetLODIndexFromViewerDistance(viewerDistanceFromNearestEdge));
-                        _visibleTerrainChunks.Add(this);
+                    }
+
+                    if (wasVisible != visible)
+                    {
+                        if (visible)
+                        {
+                            _visibleTerrainChunks.Add(this);
+                        }
+                        else
+                        {
+                            _visibleTerrainChunks.Remove(this);
+                        }
                     }
 
                     SetVisible(visible);
                 }
             }
 
-            public void SetVisible(bool visible)
+            private void SetVisible(bool visible)
             {
                 _gameObject.SetActive(visible);
             }
@@ -152,23 +176,30 @@ namespace ProceduralTerrain
                         lodMesh.RequestMesh(_mapData);
                     }
                 }
-
-                // Collider mesh
-                if (lodIndex == 0)
-                {
-                   UpdateCollisionMesh();
-                }
             }
 
-            private void UpdateCollisionMesh()
+            public void UpdateCollisionMesh()
             {
-                if (_collisionMesh.HasMesh)
+                if (_hasSetCollider) return;
+
+                float sqrDstFromViewerToEdge = _bounds.SqrDistance(ViewerPosition);
+                LODMesh lodMesh = _lodMeshes[_colliderLODIndex];
+
+                if (sqrDstFromViewerToEdge < _detailLevels[_colliderLODIndex].SqrDistThreshold)
                 {
-                    _meshCollider.sharedMesh = _collisionMesh.Mesh;
+                    if (!lodMesh.HasRequestedMesh)
+                    {
+                        lodMesh.RequestMesh(_mapData);
+                    }
                 }
-                else if (!_collisionMesh.HasRequestedMesh) 
+
+                if (sqrDstFromViewerToEdge < ColliderGenerationDistanceThreshold * ColliderGenerationDistanceThreshold)
                 {
-                    _collisionMesh.RequestMesh(_mapData);
+                    if (lodMesh.HasMesh)
+                    {
+                        _meshCollider.sharedMesh = lodMesh.Mesh;
+                        _hasSetCollider = true;
+                    }
                 }
             }
 
@@ -193,12 +224,11 @@ namespace ProceduralTerrain
             public bool HasMesh { get; private set; }
             
             private readonly int _lod;
-            private readonly System.Action _updateCallback;
+            private event System.Action _updateCallback;
 
-            public LODMesh(int lod, System.Action updateCallback)
+            public LODMesh(int lod)
             {
                 _lod = lod;
-                _updateCallback = updateCallback;
             }
 
             public void RequestMesh(MapGenerator.MapData mapData)
@@ -207,12 +237,17 @@ namespace ProceduralTerrain
                 _mapGenerator.RequestMeshData(mapData, _lod, OnMeshDataReceived);
             }
 
+            public void AddCallback(System.Action callback)
+            {
+                _updateCallback += callback;
+            }
+
             private void OnMeshDataReceived(MeshGenerator.MeshData meshData)
             {
                 Mesh = meshData.CreateMesh();
                 HasMesh = true;
 
-                _updateCallback.Invoke();
+                _updateCallback?.Invoke();
             }
         }
 
@@ -223,18 +258,31 @@ namespace ProceduralTerrain
         public struct LODInfo
         {
             /// <summary>
+            /// The level of detail.
             /// A higher number will reduce the amount of geometry.
             /// </summary>
+            [Range(0, MeshGenerator.SupportedLODCount)]
             public int level;
 
+            /// <summary>
+            /// The distance from viewer at which LOD is active.
+            /// </summary>
             public float distanceThreshold;
-            public bool useForCollider;
+
+            /// <summary>
+            /// The square root of the visible distance threshold;
+            /// </summary>
+            public float SqrDistThreshold => distanceThreshold * distanceThreshold;
         }
 
         #endregion Nested Types
 
         [SerializeField]
         private List<LODInfo> _detailLevels;
+
+        [SerializeField]
+        [Range(0, MeshGenerator.SupportedLODCount - 1)]
+        private int _colliderLODIndex;
 
         [SerializeField]
         private Transform _viewer;
@@ -265,7 +313,7 @@ namespace ProceduralTerrain
         private void Start()
         {
             _mapGenerator = GetComponent<MapGenerator>();
-            _chunkSize = _mapGenerator.ChunkSize - 1;
+            _chunkSize = _mapGenerator.GetChunkSize() - 1;
             _maxViewDistance = _detailLevels[_detailLevels.Count - 1].distanceThreshold;
             _chunkVisibleInViewDistance = Mathf.RoundToInt(_maxViewDistance / _chunkSize);
 
@@ -276,6 +324,15 @@ namespace ProceduralTerrain
         {
             Vector3 currentPosition = _viewer.position;
             ViewerPosition = new Vector2(currentPosition.x, currentPosition.z) / _mapGenerator.TerrainData.WorldScale;
+
+            // Update terrain chunk colliders
+            if (ViewerPosition != _lastViewerPosition)
+            {
+                for (int i = 0, length = _visibleTerrainChunks.Count; i < length; ++i)
+                {
+                    _visibleTerrainChunks[i].UpdateCollisionMesh();
+                }
+            }
 
             // Update only if viewer has moved enough.
             if ((_lastViewerPosition - ViewerPosition).sqrMagnitude > SqrViewerMoveDistanceThreshold)
@@ -291,7 +348,8 @@ namespace ProceduralTerrain
 
         private void UpdateVisibleChunks()
         {
-            ResetVisibleChunks();
+            HashSet<Vector2> updatedChunkCoords = new HashSet<Vector2>();
+            UpdatePreviouslyVisibleChunks(in updatedChunkCoords);
 
             int currentChunkCoordX = Mathf.RoundToInt(ViewerPosition.x / _chunkSize);
             int currentChunkCoordY = Mathf.RoundToInt(ViewerPosition.y / _chunkSize);
@@ -300,8 +358,23 @@ namespace ProceduralTerrain
             {
                 for (int xOffset = -_chunkVisibleInViewDistance; xOffset <= _chunkVisibleInViewDistance; ++xOffset)
                 {
-                    UpdateChunkAtPosition(new Vector2(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset));
+                    var chunkCoordinates = new Vector2(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset);
+
+                    if (!updatedChunkCoords.Contains(chunkCoordinates))
+                    {
+                        UpdateChunkAtPosition(chunkCoordinates);
+                    }
                 }
+            }
+        }
+
+        private static void UpdatePreviouslyVisibleChunks(in HashSet<Vector2> updatedChunkCoords)
+        {
+            // We iterate backward as UpdateTerrainChunk might remove elements from the visible terrain chunks list.
+            for (int i = _visibleTerrainChunks.Count - 1; i >= 0; --i)
+            {
+                updatedChunkCoords.Add(_visibleTerrainChunks[i].Coordinates);
+                _visibleTerrainChunks[i].UpdateTerrainChunk();
             }
         }
 
@@ -314,18 +387,8 @@ namespace ProceduralTerrain
             }
             else
             {
-                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, _detailLevels, transform, _mapMaterial));
+                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, _detailLevels, _colliderLODIndex, transform, _mapMaterial));
             }
-        }
-
-        private static void ResetVisibleChunks()
-        {
-            for (int i = 0, length = _visibleTerrainChunks.Count; i < length; ++i)
-            {
-                _visibleTerrainChunks[i].SetVisible(false);
-            }
-
-            _visibleTerrainChunks.Clear();
         }
 
         #endregion Private Methods

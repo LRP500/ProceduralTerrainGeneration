@@ -14,38 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _layers:
   - _texture: {fileID: 2800000, guid: 14c3412fac2387748bb423234bad06cc, type: 3}
-    _tint: {r: 0.13971162, g: 0.2563047, b: 0.4433962, a: 0}
-    _tintStrength: 0.445
+    _tint: {r: 0.095692396, g: 0.15913786, b: 0.26415092, a: 0}
+    _tintStrength: 0.36
     _startHeight: 0
     _blendStrength: 0
-    _textureScale: 12
+    _textureScale: 44.15
   - _texture: {fileID: 2800000, guid: 30a79e867e657f8459c8cc2de759d0ce, type: 3}
     _tint: {r: 0.5943396, g: 0.5529238, b: 0.41155213, a: 0}
     _tintStrength: 0
-    _startHeight: 0.12
-    _blendStrength: 0.023
+    _startHeight: 0.016
+    _blendStrength: 0.008
     _textureScale: 12
   - _texture: {fileID: 2800000, guid: e537034c3b94e8940a842b74b39a43d6, type: 3}
     _tint: {r: 0.070914894, g: 0.11320752, b: 0.070914894, a: 0}
-    _tintStrength: 0.285
-    _startHeight: 0.138
-    _blendStrength: 0.053
-    _textureScale: 12
+    _tintStrength: 0.247
+    _startHeight: 0.02
+    _blendStrength: 0.078
+    _textureScale: 29
   - _texture: {fileID: 2800000, guid: e48cd5fcf3e8216499043aae0643aa0d, type: 3}
     _tint: {r: 0.23584908, g: 0.20864362, b: 0.17666431, a: 0}
     _tintStrength: 0.283
-    _startHeight: 0.393
+    _startHeight: 0.544
     _blendStrength: 0.245
-    _textureScale: 12
+    _textureScale: 41.3
   - _texture: {fileID: 2800000, guid: 0ceeebf65d641aa4491caac4594bef86, type: 3}
     _tint: {r: 0.14150941, g: 0.12493768, b: 0.10599856, a: 0}
     _tintStrength: 0.255
-    _startHeight: 0.491
+    _startHeight: 0.69
     _blendStrength: 0.165
-    _textureScale: 12
-  - _texture: {fileID: 2800000, guid: 05e6be1aea20d5743bb5cd973ca79ad7, type: 3}
-    _tint: {r: 1, g: 1, b: 1, a: 0}
-    _tintStrength: 0
-    _startHeight: 1
-    _blendStrength: 0.148
-    _textureScale: 12
+    _textureScale: 44.58

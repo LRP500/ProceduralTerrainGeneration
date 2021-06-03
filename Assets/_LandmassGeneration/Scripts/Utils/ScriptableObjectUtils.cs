@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Utils
 {
+#if UNITY_EDITOR
+
     public static class ScriptableObjectUtils
     {
         /// <summary>
@@ -58,4 +60,6 @@ namespace ProceduralTerrain.Utils
             AssetDatabase.Refresh();
         }
     }
+
+#endif
 }

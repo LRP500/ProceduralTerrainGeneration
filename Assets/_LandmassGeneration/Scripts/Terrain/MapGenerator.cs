@@ -50,8 +50,27 @@ namespace ProceduralTerrain
         [SerializeField]
         private Material _terrainMaterial;
 
+        /// <summary>
+        /// Use smaller chunk sizes for better performances.
+        /// </summary>
+        [SerializeField]
+        [Range(0, MeshGenerator.SupportedChunkSizeCount - 1)]
+        private int _chunkSizeIndex;
+
+        /// <summary>
+        /// Same as <see cref="_chunkSizeIndex"/> but for flat shaded mode.
+        /// </summary>
+        [SerializeField]
+        [Range(0, MeshGenerator.SupportedFlatShadedChunkSizeCount- 1)]
+        private int _flatShadedChunkSizeIndex;
+
         [SerializeField]
         private Noise.NormalizeMode _normalizeMode;
+
+        [SerializeField]
+        [LabelText("Editor Preview LOD")]
+        [Range(0, MeshGenerator.SupportedLODCount - 1)]
+        private int _editorPreviewLOD = 1;
 
         public bool _autoUpdate = true;
 
@@ -64,9 +83,14 @@ namespace ProceduralTerrain
 
         // Chunk size must be dividable by all possible LOD values
         // (e.g. 240 is dividable by all numbers up to twelve)
-        // (- 2 to compensate for borders used to calculate seamless normals)
+        // (-2 to compensate for borders used to calculate seamless normals)
         // With flat shading we need 3x the triangles so we use a smaller chunk size.
-        public int ChunkSize => _terrainData.UseFlatShading ? 95 : 239;
+        public int GetChunkSize()
+        {
+            return _terrainData.UseFlatShading
+                ? MeshGenerator.SupportedFlatShadedChunkSizes[_flatShadedChunkSizeIndex] - 1
+                : MeshGenerator.SupportedChunkSizes[_chunkSizeIndex] - 1;
+        } 
 
         public NoiseData NoiseData => _noiseData;
         public TerrainData TerrainData => _terrainData;
@@ -90,17 +114,19 @@ namespace ProceduralTerrain
             _display = _display ? _display : GetComponent<MapDisplay>();
             _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
             _textureData.ApplyToMaterial(_terrainMaterial);
-            _display.DrawMap(mapData, _terrainData);
+            _display.DrawMap(mapData, _terrainData, _editorPreviewLOD);
         }
 
         private MapData GenerateMapData(Vector2 center)
         {
             // We add 2 to chunk size to compensate for the borders used to calculate seamless normals
-            float[,] heightMap = Noise.GenerateNoiseMap(_noiseData, center, ChunkSize + 2, _normalizeMode);
+            int chunkSize = GetChunkSize() + 2;
+            
+            float[,] heightMap = Noise.GenerateNoiseMap(_noiseData, center, chunkSize, _normalizeMode);
 
             if (_terrainData.UseFalloff)
             {
-               ApplyFalloff(heightMap, ChunkSize + 2);
+               ApplyFalloff(heightMap, chunkSize);
             }
 
             return new MapData(heightMap);
@@ -108,7 +134,7 @@ namespace ProceduralTerrain
 
         private void ApplyFalloff(in float[,] heightMap, int chunkSize)
         {
-            _falloffMap ??= FalloffGenerator.GenerateFalloffMap(ChunkSize + 2);
+            _falloffMap ??= FalloffGenerator.GenerateFalloffMap(GetChunkSize() + 2);
 
             for (int y = 0, height = chunkSize; y < height; ++y)
             {
@@ -195,23 +221,30 @@ namespace ProceduralTerrain
 
         private void OnNoiseDataChanged()
         {
-            if (_autoUpdate)
-            {
-                DrawMap();
-            }
+            UpdatePreview();
         }
 
         private void OnTerrainDataChanged()
         {
-            if (_autoUpdate)
-            {
-                DrawMap();
-            }
+            UpdatePreview();
         }
 
         private void OnTextureDataChanged()
         {
             _textureData.ApplyToMaterial(_terrainMaterial);
+        }
+
+        private void OnValidate()
+        {
+           UpdatePreview();
+        }
+
+        private void UpdatePreview()
+        {
+            if (_autoUpdate)
+            {
+                DrawMap();
+            }
         }
 
         #endregion Editor
