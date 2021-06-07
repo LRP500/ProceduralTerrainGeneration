@@ -35,7 +35,7 @@ namespace ProceduralTerrain
             #region Private Fields
 
             private readonly GameObject _gameObject;
-            private readonly Vector2 _position;
+            private readonly Vector2 _sampleCenter;
             private Bounds _bounds;
 
             private readonly MeshRenderer _meshRenderer;
@@ -46,32 +46,31 @@ namespace ProceduralTerrain
             private readonly LODMesh[] _lodMeshes;
             private readonly int _colliderLODIndex;
 
-            private MapGenerator.MapData _mapData;
-            private bool _mapDataReceived;
+            private HeightMapGenerator.HeightMap _heightMap;
+            private bool _heightMapReceived;
             private bool _hasSetCollider;
             private int _previousLODIndex = -1;
 
             #endregion Private Fields
 
             private bool IsVisible() => _gameObject.activeSelf;
-            public Vector2 Coordinates { get; set; }
+            public Vector2 Coordinates { get; }
 
             #region Public Methods
 
-            public TerrainChunk(Vector2 coord, int size, List<LODInfo> detailLevels, int colliderLODIndex, Transform parent, Material material)
+            public TerrainChunk(Vector2 coord, float worldSize, List<LODInfo> detailLevels, int colliderLODIndex, Transform parent, Material material)
             {
                 Coordinates = coord;
                 _detailLevels = detailLevels.ToArray();
                 _colliderLODIndex = colliderLODIndex;
-                _position = coord * size;
-                _bounds = new Bounds(_position, Vector2.one * size);
-                var worldPosition = new Vector3(_position.x, 0, _position.y);
+               
+                _sampleCenter = coord * worldSize / _mapGenerator.MeshSettings.Scale;
+                Vector2 position = coord * worldSize;
+                _bounds = new Bounds(position, Vector2.one * worldSize);
 
-                // Initialize visual state
                 _gameObject = new GameObject("Terrain Chunk");
+                _gameObject.transform.position = new Vector3(position.x, 0, position.y);
                 _gameObject.transform.SetParent(parent);
-                _gameObject.transform.position = worldPosition * _mapGenerator.TerrainData.WorldScale;
-                _gameObject.transform.localScale = Vector3.one * _mapGenerator.TerrainData.WorldScale;
                 
                 _meshFilter = _gameObject.AddComponent<MeshFilter>();
                 _meshCollider = _gameObject.AddComponent<MeshCollider>();
@@ -94,7 +93,7 @@ namespace ProceduralTerrain
                 }
                 
                 // Request map data
-                _mapGenerator.RequestMapData(_position, OnMapDataReceived);
+                _mapGenerator.RequestHeightMap(_sampleCenter, OnHeightMapReceived);
             }
 
             /// <summary>
@@ -102,7 +101,7 @@ namespace ProceduralTerrain
             /// </summary>
             public void UpdateTerrainChunk()
             {
-                if (_mapDataReceived)
+                if (_heightMapReceived)
                 {
                     float viewerDistanceFromNearestEdge = Mathf.Sqrt(_bounds.SqrDistance(ViewerPosition));
                     bool wasVisible = IsVisible();
@@ -173,7 +172,7 @@ namespace ProceduralTerrain
                     }
                     else if (!lodMesh.HasRequestedMesh)
                     {
-                        lodMesh.RequestMesh(_mapData);
+                        lodMesh.RequestMesh(_heightMap);
                     }
                 }
             }
@@ -189,7 +188,7 @@ namespace ProceduralTerrain
                 {
                     if (!lodMesh.HasRequestedMesh)
                     {
-                        lodMesh.RequestMesh(_mapData);
+                        lodMesh.RequestMesh(_heightMap);
                     }
                 }
 
@@ -203,10 +202,10 @@ namespace ProceduralTerrain
                 }
             }
 
-            private void OnMapDataReceived(MapGenerator.MapData mapData)
+            private void OnHeightMapReceived(HeightMapGenerator.HeightMap heightMap)
             {
-                _mapData = mapData;
-                _mapDataReceived = true;
+                _heightMap = heightMap;
+                _heightMapReceived = true;
 
                 UpdateTerrainChunk();
             }
@@ -231,10 +230,10 @@ namespace ProceduralTerrain
                 _lod = lod;
             }
 
-            public void RequestMesh(MapGenerator.MapData mapData)
+            public void RequestMesh(HeightMapGenerator.HeightMap heightMap)
             {
                 HasRequestedMesh = true;
-                _mapGenerator.RequestMeshData(mapData, _lod, OnMeshDataReceived);
+                _mapGenerator.RequestMeshData(heightMap, _lod, OnMeshDataReceived);
             }
 
             public void AddCallback(System.Action callback)
@@ -261,7 +260,7 @@ namespace ProceduralTerrain
             /// The level of detail.
             /// A higher number will reduce the amount of geometry.
             /// </summary>
-            [Range(0, MeshGenerator.SupportedLODCount)]
+            [Range(0, MeshSettings.SupportedLODCount)]
             public int level;
 
             /// <summary>
@@ -281,7 +280,7 @@ namespace ProceduralTerrain
         private List<LODInfo> _detailLevels;
 
         [SerializeField]
-        [Range(0, MeshGenerator.SupportedLODCount - 1)]
+        [Range(0, MeshSettings.SupportedLODCount - 1)]
         private int _colliderLODIndex;
 
         [SerializeField]
@@ -296,7 +295,7 @@ namespace ProceduralTerrain
 
         private Vector2 _lastViewerPosition;
 
-        private int _chunkSize;
+        private float _meshWorldSize;
         private int _chunkVisibleInViewDistance;
 
         private readonly Dictionary<Vector2, TerrainChunk> _terrainChunks = new Dictionary<Vector2, TerrainChunk>();
@@ -313,9 +312,9 @@ namespace ProceduralTerrain
         private void Start()
         {
             _mapGenerator = GetComponent<MapGenerator>();
-            _chunkSize = _mapGenerator.GetChunkSize() - 1;
+            _meshWorldSize = _mapGenerator.MeshSettings.MeshWorldSize;
             _maxViewDistance = _detailLevels[_detailLevels.Count - 1].distanceThreshold;
-            _chunkVisibleInViewDistance = Mathf.RoundToInt(_maxViewDistance / _chunkSize);
+            _chunkVisibleInViewDistance = Mathf.RoundToInt(_maxViewDistance / _meshWorldSize);
 
             UpdateVisibleChunks();
         }
@@ -323,7 +322,7 @@ namespace ProceduralTerrain
         private void Update()
         {
             Vector3 currentPosition = _viewer.position;
-            ViewerPosition = new Vector2(currentPosition.x, currentPosition.z) / _mapGenerator.TerrainData.WorldScale;
+            ViewerPosition = new Vector2(currentPosition.x, currentPosition.z);
 
             // Update terrain chunk colliders
             if (ViewerPosition != _lastViewerPosition)
@@ -351,8 +350,8 @@ namespace ProceduralTerrain
             HashSet<Vector2> updatedChunkCoords = new HashSet<Vector2>();
             UpdatePreviouslyVisibleChunks(in updatedChunkCoords);
 
-            int currentChunkCoordX = Mathf.RoundToInt(ViewerPosition.x / _chunkSize);
-            int currentChunkCoordY = Mathf.RoundToInt(ViewerPosition.y / _chunkSize);
+            int currentChunkCoordX = Mathf.RoundToInt(ViewerPosition.x / _meshWorldSize);
+            int currentChunkCoordY = Mathf.RoundToInt(ViewerPosition.y / _meshWorldSize);
 
             for (int yOffset = -_chunkVisibleInViewDistance; yOffset <= _chunkVisibleInViewDistance; ++yOffset)
             {
@@ -387,7 +386,7 @@ namespace ProceduralTerrain
             }
             else
             {
-                _terrainChunks.Add(coord, new TerrainChunk(coord, _chunkSize, _detailLevels, _colliderLODIndex, transform, _mapMaterial));
+                _terrainChunks.Add(coord, new TerrainChunk(coord, _meshWorldSize, _detailLevels, _colliderLODIndex, transform, _mapMaterial));
             }
         }
 

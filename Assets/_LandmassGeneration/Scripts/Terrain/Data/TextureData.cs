@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ProceduralTerrain
 {
     [InlineEditor(InlineEditorObjectFieldModes.Boxed)]
-    [CreateAssetMenu(menuName = "Texture Data")]
+    [CreateAssetMenu(menuName = "Procedural Terrain/Texture Data")]
     public class TextureData : ScriptableObject
     {
         #region Constants

@@ -10,17 +10,17 @@ namespace ProceduralTerrain
         #region Serialized Fields
 
         [SerializeField]
-        private NoiseData _noiseData;
+        private HeightMapSettings _heightMapSettings;
 
         [SerializeField]
-        private TerrainData _terrainData;
+        private MeshSettings _meshSettings;
 
         #endregion Serialized Fields
 
         #region Properties
 
-        public NoiseData NoiseData => _noiseData;
-        public TerrainData TerrainData => _terrainData;
+        public HeightMapSettings HeightMapSettings => _heightMapSettings;
+        public MeshSettings MeshSettings => _meshSettings;
 
         #endregion Properties
     }

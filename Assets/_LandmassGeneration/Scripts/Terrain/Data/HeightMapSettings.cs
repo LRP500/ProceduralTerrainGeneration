@@ -4,10 +4,13 @@ using UnityEngine;
 namespace ProceduralTerrain
 {
     [InlineEditor(InlineEditorObjectFieldModes.Boxed)]
-    [CreateAssetMenu(menuName = "Terrain Data")]
-    public class TerrainData : ScriptableObject
+    [CreateAssetMenu(menuName = "Procedural Terrain/Height Map Settings")]
+    public class HeightMapSettings : ScriptableObject
     {
         #region Serialized Fields
+
+        [SerializeField]
+        private Noise.NoiseSettings _noiseSettings;
 
         [MinValue(1)]
         [SerializeField]
@@ -17,26 +20,19 @@ namespace ProceduralTerrain
         private AnimationCurve _heightCurve;
 
         [SerializeField]
-        private float _worldScale = 1f;
-
-        [SerializeField]
         private bool _useFalloff;
-
-        [SerializeField]
-        private bool _useFlatShading;
-
+        
         #endregion Serialized Fields
 
         #region Properties
 
+        public Noise.NoiseSettings NoiseSettings => _noiseSettings;
         public float HeightMultiplier => _heightMultiplier;
         public AnimationCurve HeightCurve => _heightCurve;
-        public float WorldScale => _worldScale;
         public bool UseFalloff => _useFalloff;
-        public bool UseFlatShading => _useFlatShading;
 
-        public float MinHeight => WorldScale * HeightMultiplier * HeightCurve.Evaluate(0);
-        public float MaxHeight => WorldScale * HeightMultiplier * HeightCurve.Evaluate(1);
+        public float MinHeight => HeightMultiplier * HeightCurve.Evaluate(0);
+        public float MaxHeight => HeightMultiplier * HeightCurve.Evaluate(1);
 
         #endregion Properties
     }

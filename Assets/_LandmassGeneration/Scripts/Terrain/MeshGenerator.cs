@@ -8,15 +8,6 @@ namespace ProceduralTerrain
     /// </summary>
     public static class MeshGenerator
     {
-        /// <summary>
-        /// The maximum number of levels of detail currently supported.
-        /// </summary>
-        public const int SupportedLODCount = 5;
-
-        public const int SupportedChunkSizeCount = 9;
-        public const int SupportedFlatShadedChunkSizeCount = 3;
-        public static readonly int[] SupportedChunkSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240 };
-        public static readonly int[] SupportedFlatShadedChunkSizes = { 48, 72, 96 };
 
         #region Nested Types
 
@@ -202,17 +193,14 @@ namespace ProceduralTerrain
         #endregion Nested Types
 
         /// <summary>
-        /// Generates terrain mesh with specified level of detail.
+        /// Generates terrain mesh from height map.
         /// </summary>
-        /// <param name="heightMap">The generated height map.</param>
-        /// <param name="data">The map generation data.</param>
-        /// <param name="lod">The level of detail.</param>
-        /// <returns>The generated mesh data.</returns>
-        public static MeshData GenerateTerrainMesh(float[,] heightMap, TerrainData data, int lod)
+        /// <param name="heightMap">The height map to generate mesh from.</param>
+        /// <param name="settings"></param>
+        /// <param name="lod"></param>
+        /// <returns></returns>
+        public static MeshData GenerateTerrainMesh(float[,] heightMap, MeshSettings settings, int lod)
         {
-            // Important: we create a new local instance of animation curve as AnimationCurve is not thread safe.
-            var heightCurve = new AnimationCurve(data.HeightCurve.keys);
-
             int increment = lod == 0 ? 1 : lod * 2; // Mesh simplification increment (LOD)
             int borderedSize = heightMap.GetLength(0);
             int meshSize = borderedSize - 2 * increment; // Use mesh simplification increment to compensate for border size
@@ -221,7 +209,7 @@ namespace ProceduralTerrain
             float topLeftZ = (meshSizeUnsimplified - 1) / 2f;
 
             int verticesPerLine = (meshSize - 1) / increment + 1;
-            var meshData = new MeshData(verticesPerLine, data.UseFlatShading);
+            var meshData = new MeshData(verticesPerLine, settings.UseFlatShading);
 
             int[,] vertexIndicesMap = new int[borderedSize, borderedSize];
             int meshVertexIndex = 0;
@@ -251,9 +239,12 @@ namespace ProceduralTerrain
                 for (int x = 0; x < borderedSize; x += increment)
                 {
                     int vertexIndex = vertexIndicesMap[x, y];
-                    var height = heightCurve.Evaluate(heightMap[x, y]) * data.HeightMultiplier;
-                    var percent = new Vector2((x - increment) / (float) meshSize, (y - increment) / (float) meshSize); 
-                    var vertexPosition = new Vector3(topLeftX + percent.x * meshSizeUnsimplified, height, topLeftZ - percent.y * meshSizeUnsimplified);
+                    var percent = new Vector2((x - increment) / (float) meshSize, (y - increment) / (float) meshSize);
+                    var height = heightMap[x, y];
+                    
+                    var posX = (topLeftX + percent.x * meshSizeUnsimplified) * settings.Scale;
+                    var posZ = (topLeftZ - percent.y * meshSizeUnsimplified) * settings.Scale;
+                    var vertexPosition = new Vector3(posX, height, posZ);
                     
                     meshData.AddVertex(vertexPosition, percent, vertexIndex);
 

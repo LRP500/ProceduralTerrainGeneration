@@ -33,27 +33,27 @@ namespace ProceduralTerrain
             return _mapGenerator;
         }
 
-        public void DrawMap(MapGenerator.MapData mapData, TerrainData terrainData, int editorPreviewLOD)
+        public void DrawMap(HeightMapGenerator.HeightMap heightMap, MeshSettings meshSettings, int editorPreviewLOD)
         {
             if (_drawMode == DrawMode.HeightMap)
             {
-                DrawTexture(TextureGenerator.TextureFromHeightMap(mapData.heightMap));
+                DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap.values));
             }
             else if (_drawMode == DrawMode.FalloffMap)
             {
-                var fallOffMap = FalloffGenerator.GenerateFalloffMap(_mapGenerator.GetChunkSize());
+                var fallOffMap = FalloffGenerator.GenerateFalloffMap(meshSettings.VertexCountPerLine);
                 DrawTexture(TextureGenerator.TextureFromHeightMap(fallOffMap));
             }
             else if (_drawMode == DrawMode.Mesh)
             {
-                DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, terrainData, editorPreviewLOD));
+                DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, editorPreviewLOD));
             }
         }
 
         private void DrawMesh(MeshGenerator.MeshData meshData)
         {
             _meshFilter.sharedMesh = meshData.CreateMesh();
-            _meshFilter.transform.localScale = Vector3.one * GetMapGenerator().TerrainData.WorldScale;
+            _meshFilter.transform.localScale = Vector3.one * GetMapGenerator().MeshSettings.Scale;
         }
 
         private void DrawTexture(Texture texture)

@@ -11,16 +11,6 @@ namespace ProceduralTerrain
     {
         #region Nested Types
 
-        public readonly struct MapData
-        {
-            public readonly float[,] heightMap;
-
-            public MapData(float[,] heightMap)
-            {
-                this.heightMap = heightMap;
-            }
-        }
-
         private readonly struct MapThreadInfo<T>
         {
             public readonly System.Action<T> callback;
@@ -36,12 +26,12 @@ namespace ProceduralTerrain
         #endregion Nested Types
 
         [SerializeField]
-        [OnValueChanged(nameof(OnNoiseDataChanged), true)]
-        private NoiseData _noiseData;
+        [OnValueChanged(nameof(OnHeightMapSettingsChanged), true)]
+        private HeightMapSettings _heightMapSettings;
 
         [SerializeField]
-        [OnValueChanged(nameof(OnTerrainDataChanged), true)]
-        private TerrainData _terrainData;
+        [OnValueChanged(nameof(OnMeshSettingsChanged), true)]
+        private MeshSettings _meshSettings;
 
         [SerializeField]
         [OnValueChanged(nameof(OnTextureDataChanged), true)]
@@ -50,26 +40,9 @@ namespace ProceduralTerrain
         [SerializeField]
         private Material _terrainMaterial;
 
-        /// <summary>
-        /// Use smaller chunk sizes for better performances.
-        /// </summary>
-        [SerializeField]
-        [Range(0, MeshGenerator.SupportedChunkSizeCount - 1)]
-        private int _chunkSizeIndex;
-
-        /// <summary>
-        /// Same as <see cref="_chunkSizeIndex"/> but for flat shaded mode.
-        /// </summary>
-        [SerializeField]
-        [Range(0, MeshGenerator.SupportedFlatShadedChunkSizeCount- 1)]
-        private int _flatShadedChunkSizeIndex;
-
-        [SerializeField]
-        private Noise.NormalizeMode _normalizeMode;
-
         [SerializeField]
         [LabelText("Editor Preview LOD")]
-        [Range(0, MeshGenerator.SupportedLODCount - 1)]
+        [Range(0, MeshSettings.SupportedLODCount - 1)]
         private int _editorPreviewLOD = 1;
 
         public bool _autoUpdate = true;
@@ -78,63 +51,40 @@ namespace ProceduralTerrain
 
         private float[,] _falloffMap;
 
-        private readonly Queue<MapThreadInfo<MapData>> _mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+        private readonly Queue<MapThreadInfo<HeightMapGenerator.HeightMap>> _heightMapThreadInfoQueue = new Queue<MapThreadInfo<HeightMapGenerator.HeightMap>>();
         private readonly Queue<MapThreadInfo<MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
-        // Chunk size must be dividable by all possible LOD values
-        // (e.g. 240 is dividable by all numbers up to twelve)
-        // (-2 to compensate for borders used to calculate seamless normals)
-        // With flat shading we need 3x the triangles so we use a smaller chunk size.
-        public int GetChunkSize()
-        {
-            return _terrainData.UseFlatShading
-                ? MeshGenerator.SupportedFlatShadedChunkSizes[_flatShadedChunkSizeIndex] - 1
-                : MeshGenerator.SupportedChunkSizes[_chunkSizeIndex] - 1;
-        } 
+        public MeshSettings MeshSettings => _meshSettings;
 
-        public NoiseData NoiseData => _noiseData;
-        public TerrainData TerrainData => _terrainData;
-        public TextureData TextureData => _textureData;
-
-        private void Awake()
+        private void Start()
         {
             _textureData.ApplyToMaterial(_terrainMaterial);
-            _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
+            _textureData.UpdateMeshHeights(_terrainMaterial, _heightMapSettings.MinHeight, _heightMapSettings.MaxHeight);
         }
 
         private void Update()
         {
-            ProcessMapDataInfoQueue();
+            ProcessHeightMapInfoQueue();
             ProcessMeshDataInfoQueue();
         }
 
         private void DrawMap()
         {
-            MapData mapData = GenerateMapData(Vector2.zero);
+            HeightMapGenerator.HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(
+                _meshSettings.VertexCountPerLine,
+                _meshSettings.VertexCountPerLine,
+                _heightMapSettings,
+                Vector2.zero);
+
             _display = _display ? _display : GetComponent<MapDisplay>();
-            _textureData.UpdateMeshHeights(_terrainMaterial, _terrainData.MinHeight, _terrainData.MaxHeight);
+            _textureData.UpdateMeshHeights(_terrainMaterial, _heightMapSettings.MinHeight, _heightMapSettings.MaxHeight);
             _textureData.ApplyToMaterial(_terrainMaterial);
-            _display.DrawMap(mapData, _terrainData, _editorPreviewLOD);
-        }
-
-        private MapData GenerateMapData(Vector2 center)
-        {
-            // We add 2 to chunk size to compensate for the borders used to calculate seamless normals
-            int chunkSize = GetChunkSize() + 2;
-            
-            float[,] heightMap = Noise.GenerateNoiseMap(_noiseData, center, chunkSize, _normalizeMode);
-
-            if (_terrainData.UseFalloff)
-            {
-               ApplyFalloff(heightMap, chunkSize);
-            }
-
-            return new MapData(heightMap);
+            _display.DrawMap(heightMap, _meshSettings, _editorPreviewLOD);
         }
 
         private void ApplyFalloff(in float[,] heightMap, int chunkSize)
         {
-            _falloffMap ??= FalloffGenerator.GenerateFalloffMap(GetChunkSize() + 2);
+            _falloffMap ??= FalloffGenerator.GenerateFalloffMap(_meshSettings.VertexCountPerLine);
 
             for (int y = 0, height = chunkSize; y < height; ++y)
             {
@@ -147,31 +97,35 @@ namespace ProceduralTerrain
 
         #region Threading
 
-        public void RequestMapData(Vector2 center, System.Action<MapData> callback)
+        public void RequestHeightMap(Vector2 center, System.Action<HeightMapGenerator.HeightMap> callback)
         {
-            void ThreadStart() => MapDataThread(center, callback);
+            void ThreadStart() => HeightMapThread(center, callback);
             new Thread(ThreadStart).Start();
         }
 
-        private void MapDataThread(Vector2 center, System.Action<MapData> callback)
+        private void HeightMapThread(Vector2 center, System.Action<HeightMapGenerator.HeightMap> callback)
         {
-            MapData mapData = GenerateMapData(center);
+            HeightMapGenerator.HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(
+                _meshSettings.VertexCountPerLine,
+                _meshSettings.VertexCountPerLine,
+                _heightMapSettings,
+                center);
 
-            lock (_mapDataThreadInfoQueue)
+            lock (_heightMapThreadInfoQueue)
             {
-                _mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
+                _heightMapThreadInfoQueue.Enqueue(new MapThreadInfo<HeightMapGenerator.HeightMap>(callback, heightMap));
             }
         }
 
-        public void RequestMeshData(MapData mapData, int lod, System.Action<MeshData> callback)
+        public void RequestMeshData(HeightMapGenerator.HeightMap heightMap, int lod, System.Action<MeshData> callback)
         {
-            void ThreadStart() => MeshDataThread(mapData, lod, callback);
+            void ThreadStart() => MeshDataThread(heightMap, lod, callback);
             new Thread(ThreadStart).Start();
         }
 
-        private void MeshDataThread(MapData mapData, int lod, System.Action<MeshData> callback)
+        private void MeshDataThread(HeightMapGenerator.HeightMap heightMap, int lod, System.Action<MeshData> callback)
         {
-            MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, _terrainData, lod);
+            MeshData meshData = MeshGenerator.GenerateTerrainMesh(heightMap.values, _meshSettings, lod);
 
             lock (_meshDataThreadInfoQueue)
             {
@@ -179,15 +133,15 @@ namespace ProceduralTerrain
             }
         }
 
-        private void ProcessMapDataInfoQueue()
+        private void ProcessHeightMapInfoQueue()
         {
-            lock (_mapDataThreadInfoQueue)
+            lock (_heightMapThreadInfoQueue)
             {
-                if (_mapDataThreadInfoQueue.Count > 0)
+                if (_heightMapThreadInfoQueue.Count > 0)
                 {
-                    for (int i = 0, length = _mapDataThreadInfoQueue.Count; i < length; ++i)
+                    for (int i = 0, length = _heightMapThreadInfoQueue.Count; i < length; ++i)
                     {
-                        var threadInfo = _mapDataThreadInfoQueue.Dequeue();
+                        var threadInfo = _heightMapThreadInfoQueue.Dequeue();
                         threadInfo.callback?.Invoke(threadInfo.parameter);
                     }
                 }
@@ -219,12 +173,12 @@ namespace ProceduralTerrain
             DrawMap();
         }
 
-        private void OnNoiseDataChanged()
+        private void OnHeightMapSettingsChanged()
         {
             UpdatePreview();
         }
 
-        private void OnTerrainDataChanged()
+        private void OnMeshSettingsChanged()
         {
             UpdatePreview();
         }
