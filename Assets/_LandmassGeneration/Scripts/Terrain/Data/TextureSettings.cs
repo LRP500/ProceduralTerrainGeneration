@@ -5,8 +5,8 @@ using UnityEngine;
 namespace ProceduralTerrain
 {
     [InlineEditor(InlineEditorObjectFieldModes.Boxed)]
-    [CreateAssetMenu(menuName = "Procedural Terrain/Texture Data")]
-    public class TextureData : ScriptableObject
+    [CreateAssetMenu(menuName = "Procedural Terrain/Texture Settings")]
+    public class TextureSettings : ScriptableObject
     {
         #region Constants
 
@@ -64,7 +64,6 @@ namespace ProceduralTerrain
         [SerializeField]
         private Layer[] _layers;
 
-
         public void ApplyToMaterial(Material material)
         {
             material.SetInt(LayerCount, _layers.Length);
@@ -91,7 +90,7 @@ namespace ProceduralTerrain
             return textureArray;
         }
 
-        public void UpdateMeshHeights(Material material, float minHeight, float maxHeight)
+        public static void UpdateMeshHeights(Material material, float minHeight, float maxHeight)
         {
             material.SetFloat(MinHeight, minHeight);
             material.SetFloat(MaxHeight, maxHeight);
