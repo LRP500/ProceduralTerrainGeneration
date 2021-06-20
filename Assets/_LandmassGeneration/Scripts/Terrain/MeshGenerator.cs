@@ -26,7 +26,7 @@ namespace ProceduralTerrain
 
             private Vector3[] _bakedNormals;
 
-            private bool _useFlatShading;
+            private readonly bool _useFlatShading;
 
             public MeshData(int vertCountPerLine, int skipIncrement, bool useFlatShading)
             {
@@ -211,15 +211,8 @@ namespace ProceduralTerrain
         {
             int skipIncrement = lod == 0 ? 1 : lod * 2;
             int vertCountPerLine = settings.VertexCountPerLine;
-
             Vector2 topLeft = new Vector2(-1, 1) * settings.MeshWorldSize / 2f;
-
             int borderedSize = heightMap.GetLength(0);
-            int meshSize = borderedSize - 2 * skipIncrement; // Use mesh simplification increment to compensate for border size
-            int meshSizeUnsimplified = borderedSize - 2; // Mesh size independant from LOD
-            float topLeftX = (meshSizeUnsimplified - 1) / -2f;
-            float topLeftZ = (meshSizeUnsimplified - 1) / 2f;
-
             var meshData = new MeshData(vertCountPerLine, skipIncrement, settings.UseFlatShading);
 
             int[,] vertexIndicesMap = new int[borderedSize, borderedSize];

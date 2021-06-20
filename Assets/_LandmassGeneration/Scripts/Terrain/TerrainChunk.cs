@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +17,7 @@ namespace ProceduralTerrain
         /// </summary>
         private const float ColliderGenerationDistanceThreshold = 5;
 
-        public event Action<TerrainChunk, bool> OnVisibilityChanged;
+        public event System.Action<TerrainChunk, bool> OnVisibilityChanged;
 
         #endregion Constants
 
@@ -41,11 +40,11 @@ namespace ProceduralTerrain
         private bool _hasSetCollider;
         private int _previousLODIndex = -1;
 
-        private HeightMapSettings _heightMapSettings;
-        private MeshSettings _meshSettings;
-        private Transform _viewer;
+        private readonly HeightMapSettings _heightMapSettings;
+        private readonly MeshSettings _meshSettings;
+        private readonly Transform _viewer;
 
-        private float _maxViewDistance;
+        private readonly float _maxViewDistance;
 
         #endregion Private Fields
 
@@ -99,7 +98,7 @@ namespace ProceduralTerrain
         public void Load()
         {
             ThreadedDataService.RequestData(() => HeightMapGenerator.GenerateHeightMap(
-                    _meshSettings.VertexCountPerLine, 
+                    _meshSettings.VertexCountPerLine,
                     _meshSettings.VertexCountPerLine, 
                     _heightMapSettings, 
                     _sampleCenter), 
@@ -122,11 +121,10 @@ namespace ProceduralTerrain
                     SetMeshFromLODIndex(GetLODIndexFromViewerDistance(viewerDistanceFromNearestEdge));
                 }
 
-                SetVisible(visible);
-
                 if (wasVisible != visible)
-                {
-                   OnVisibilityChanged?.Invoke(this, visible);
+                { 
+                    SetVisible(visible);
+                    OnVisibilityChanged?.Invoke(this, visible);
                 }
             }
         }
@@ -136,7 +134,7 @@ namespace ProceduralTerrain
             _gameObject.SetActive(visible);
         }
 
-        public void SubscribeOnVisibilityChanged(Action<TerrainChunk, bool> callback)
+        public void SubscribeOnVisibilityChanged(System.Action<TerrainChunk, bool> callback)
         {
             OnVisibilityChanged += callback;
         }

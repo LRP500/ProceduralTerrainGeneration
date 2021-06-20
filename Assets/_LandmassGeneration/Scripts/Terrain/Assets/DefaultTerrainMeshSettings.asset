@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _scale: 1
   _useFlatShading: 0
-  _chunkSizeIndex: 3
+  _chunkSizeIndex: 0
   _flatShadedChunkSizeIndex: 0
