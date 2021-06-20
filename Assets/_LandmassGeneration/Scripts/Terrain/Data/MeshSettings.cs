@@ -10,6 +10,11 @@ namespace ProceduralTerrain
         #region Constants
 
         /// <summary>
+        /// The number of vertices making the LOD stitching border.
+        /// </summary>
+        private const int BorderSize = 5;
+
+        /// <summary>
         /// The maximum number of levels of detail currently supported.
         /// </summary>
         public const int SupportedLODCount = 5;
@@ -64,7 +69,7 @@ namespace ProceduralTerrain
         /// The number of vertices per line of mesh rendered at LOD max.
         /// Includes 2 extra vertices for borders used to calculate seamless normals.
         /// </summary>
-        public int VertexCountPerLine => SupportedChunkSizes[UseFlatShading ? _flatShadedChunkSizeIndex : _chunkSizeIndex] + 1;
+        public int VertexCountPerLine => SupportedChunkSizes[UseFlatShading ? _flatShadedChunkSizeIndex : _chunkSizeIndex] + BorderSize;
 
         /// <summary>
         /// The mesh size in world space.

@@ -127,7 +127,7 @@ namespace ProceduralTerrain
 
         private void UpdatePreview()
         {
-            if (_autoUpdate)
+            if (_autoUpdate && !Application.isPlaying)
             {
                 DrawMapInEditor();
             }
